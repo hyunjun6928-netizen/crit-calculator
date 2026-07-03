@@ -336,12 +336,11 @@ function tgl(id) {
 function resetAll() {
   document.getElementById('ero').checked = false;
   document.getElementById('nit').checked = false;
-  document.getElementById('cs').value = '9000';
-  document.getElementById('es').value = '3900';
-  // Restore defaults from data arrays
-  D1.forEach((r,i) => { document.getElementById(`c1-${i}`).checked = r[1]; });
-  D2.forEach((r,i) => { document.getElementById(`c2-${i}`).checked = r[1]; });
-  D3.forEach((r,i) => { document.getElementById(`c3-${i}`).checked = r[1]; });
+  document.getElementById('cs').value = '0';
+  document.getElementById('es').value = '0';
+  D1.forEach((r,i) => { document.getElementById(`c1-${i}`).checked = false; });
+  D2.forEach((r,i) => { document.getElementById(`c2-${i}`).checked = false; });
+  D3.forEach((r,i) => { document.getElementById(`c3-${i}`).checked = false; });
   calc();
 }
 
