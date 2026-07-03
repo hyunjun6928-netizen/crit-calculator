@@ -5,550 +5,444 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>치명타/추가타 계산기</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body {
-  font-family: -apple-system, 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
-  background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 50%, #f5f0ff 100%);
-  color: #2d3748;
-  min-height: 100vh;
-  padding-bottom: env(safe-area-inset-bottom, 20px);
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  font-family:-apple-system,'Apple SD Gothic Neo','Segoe UI',sans-serif;
+  background:linear-gradient(135deg,#f0f4ff 0%,#e8eeff 50%,#f5f0ff 100%);
+  color:#2d3748;min-height:100vh;
+  padding-bottom:env(safe-area-inset-bottom,20px);
 }
+.ct{max-width:1400px;margin:0 auto;padding:16px}
+h1{text-align:center;font-size:1.5em;margin-bottom:4px;color:#1a202c}
+.sub{text-align:center;color:#718096;margin-bottom:14px;font-size:.78em}
 
-.container { max-width: 1400px; margin: 0 auto; padding: 16px; }
+/* sticky results */
+.rw{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,#f0f4ff,#f5f0ff);padding:8px 0 10px;margin:0 -16px;padding-left:16px;padding-right:16px}
+.rs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.rc{background:#fff;border-radius:12px;padding:10px 6px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.06);border:1px solid #e2e8f0}
+.rl{font-size:.68em;color:#718096;margin-bottom:2px}
+.rv{font-size:1.3em;font-weight:bold}
+.rv1{color:#e53e3e}.rv2{color:#dd6b20}.rv3{color:#319795}.rv4{color:#6b46c1}
+.rd{font-size:.6em;color:#a0aec0;margin-top:2px}
 
-h1 { text-align: center; font-size: 1.5em; margin-bottom: 4px; color: #1a202c; }
-.subtitle { text-align: center; color: #718096; margin-bottom: 16px; font-size: 0.78em; }
+/* toggles */
+.tg{display:flex;gap:10px;align-items:center;margin-bottom:12px;padding:10px 12px;background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.04);border:1px solid #e2e8f0;font-size:.88em;flex-wrap:wrap}
+.tg label{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.tg input[type=checkbox]{accent-color:#805ad5;width:18px;height:18px}
 
-/* ===== STICKY RESULTS ===== */
-.results-wrap {
-  position: sticky; top: 0; z-index: 100;
-  background: linear-gradient(135deg, #f0f4ff, #f5f0ff);
-  padding: 8px 0 10px;
-  margin: 0 -16px;
-  padding-left: 16px; padding-right: 16px;
-}
-.results { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.result-card {
-  background: #fff; border-radius: 12px; padding: 10px 6px; text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;
-}
-.result-label { font-size: 0.68em; color: #718096; margin-bottom: 2px; }
-.result-value { font-size: 1.2em; font-weight: bold; }
-.result-crit { color: #e53e3e; }
-.result-cdmg { color: #dd6b20; }
-.result-extra { color: #319795; }
-.result-final { color: #6b46c1; }
-.result-sub { font-size: 0.6em; color: #a0aec0; margin-top: 2px; display: none; }
+/* 3-column table layout */
+.tbl-wrap{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px}
+@media(max-width:900px){.tbl-wrap{grid-template-columns:1fr}}
 
-/* ===== TOGGLES ===== */
-.toggles {
-  display: flex; gap: 10px; align-items: center; margin-bottom: 12px;
-  padding: 10px 12px; background: #fff; border-radius: 10px;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.04); border: 1px solid #e2e8f0;
-  font-size: 0.88em; flex-wrap: wrap;
-}
-.toggles label { display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
-.toggles input[type="checkbox"] { accent-color: #805ad5; width: 20px; height: 20px; }
+.tbl{background:#fff;border-radius:14px;padding:12px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1px solid #e2e8f0}
+.tbl-h{font-weight:bold;font-size:.95em;padding-bottom:8px;margin-bottom:6px;border-bottom:2.5px solid}
+.tbl-h.c1{color:#c53030;border-color:#fc8181}
+.tbl-h.c2{color:#c05621;border-color:#f6ad55}
+.tbl-h.c3{color:#2c7a7b;border-color:#4fd1c5}
 
-/* ===== PANELS ===== */
-.panels { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+/* header row in table */
+.th{display:grid;gap:2px;font-size:.7em;color:#a0aec0;font-weight:600;padding:2px 4px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.th.c1,.th.c3{grid-template-columns:24px 1fr 58px 46px 46px}
+.th.c2{grid-template-columns:24px 1fr 58px}
 
-.panel {
-  background: #fff; border-radius: 12px; padding: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;
-}
-.panel-header {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 8px; padding-bottom: 6px; border-bottom: 2.5px solid;
-  cursor: pointer; user-select: none;
-}
-.panel-crit .panel-header { border-color: #fc8181; }
-.panel-cdmg .panel-header { border-color: #f6ad55; }
-.panel-extra .panel-header { border-color: #4fd1c5; }
+/* stat row */
+.sr{display:flex;align-items:center;gap:6px;padding:6px 8px;background:#f7fafc;border-radius:8px;border:1px solid #edf2f7;margin-bottom:6px;font-size:.85em}
+.sr label{flex:1;font-weight:600;color:#4a5568}
+.sr input[type=number]{width:80px;padding:4px 8px;border-radius:6px;border:1px solid #cbd5e0;background:#fff;color:#2d3748;text-align:right;font-size:16px;-webkit-appearance:none}
+.sr .bp{font-weight:bold;font-size:.92em}
 
-.panel-title { font-size: 1em; font-weight: bold; }
-.panel-crit .panel-title { color: #c53030; }
-.panel-cdmg .panel-title { color: #c05621; }
-.panel-extra .panel-title { color: #2c7a7b; }
+/* item rows */
+.ir{display:grid;gap:2px;align-items:center;padding:5px 4px;border-radius:6px;font-size:.82em;min-height:32px;cursor:pointer;transition:background .1s}
+.ir:hover,.ir:active{background:#f7fafc}
+.ir.c1,.ir.c3{grid-template-columns:24px 1fr 58px 46px 46px}
+.ir.c2{grid-template-columns:24px 1fr 58px}
+.ir input[type=checkbox]{width:18px;height:18px;cursor:pointer;margin:0}
+.ir.c1 input{accent-color:#e53e3e}
+.ir.c2 input{accent-color:#dd6b20}
+.ir.c3 input{accent-color:#319795}
+.ir .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#4a5568}
+.ir .vl{color:#718096;font-size:.9em;text-align:right}
+.ir.empty{opacity:.4}
 
-.panel-toggle { font-size: 0.8em; color: #a0aec0; transition: transform 0.2s; }
-.panel-toggle.collapsed { transform: rotate(-90deg); }
+/* total row */
+.tr{display:grid;gap:2px;align-items:center;padding:6px 4px;border-radius:8px;font-size:.82em;font-weight:bold;margin-top:6px;border-top:1.5px solid #e2e8f0}
+.tr.c1,.tr.c3{grid-template-columns:24px 1fr 58px 46px 46px}
+.tr.c2{grid-template-columns:24px 1fr 58px}
+.tr .nm{color:#4a5568}.tr .vl{text-align:right}
+.tr.c1 .vl{color:#e53e3e}.tr.c2 .vl{color:#dd6b20}.tr.c3 .vl{color:#319795}
 
-.panel-body { transition: max-height 0.3s ease, opacity 0.2s; overflow: hidden; }
-.panel-body.collapsed { max-height: 0 !important; opacity: 0; }
+/* subtotal rows */
+.str{display:grid;gap:2px;padding:2px 4px;font-size:.75em;color:#a0aec0}
+.str.c1,.str.c3{grid-template-columns:24px 1fr 58px 46px 46px}
+.str.c2{grid-template-columns:24px 1fr 58px}
+.str .vl{text-align:right}
 
-.base-row {
-  display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
-  padding: 8px 10px; background: #f7fafc; border-radius: 8px; border: 1px solid #edf2f7;
-}
-.base-row label { flex: 1; font-weight: 600; font-size: 0.85em; color: #4a5568; }
-.base-row input[type="number"] {
-  width: 80px; padding: 6px 8px; border-radius: 8px;
-  border: 1px solid #cbd5e0; background: #fff; color: #2d3748;
-  text-align: right; font-size: 16px; /* prevents iOS zoom */
-}
-.base-row .base-pct { font-weight: bold; font-size: 0.9em; }
+/* efficiency */
+.eff{background:#fff;border-radius:14px;padding:12px 16px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1px solid #e2e8f0;margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.eff-label{font-weight:bold;color:#6b46c1;font-size:.9em}
+.eff-val{font-size:1.4em;font-weight:bold;color:#6b46c1}
 
-.item-row {
-  display: flex; align-items: center; gap: 6px; padding: 8px;
-  border-radius: 8px; transition: background 0.12s; font-size: 0.85em;
-  min-height: 40px; /* bigger touch target */
-}
-.item-row:active { background: #edf2f7; }
-.item-row input[type="checkbox"] {
-  width: 20px; height: 20px; cursor: pointer; flex-shrink: 0;
-  min-width: 20px; /* prevents squishing */
-}
-.panel-crit .item-row input[type="checkbox"] { accent-color: #e53e3e; }
-.panel-cdmg .item-row input[type="checkbox"] { accent-color: #dd6b20; }
-.panel-extra .item-row input[type="checkbox"] { accent-color: #319795; }
-
-.item-row .name {
-  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #4a5568;
-}
-.item-row .value { color: #718096; font-size: 0.85em; flex-shrink: 0; text-align: right; }
-
-.badge {
-  font-size: 0.65em; padding: 2px 5px; border-radius: 4px; flex-shrink: 0; font-weight: 600;
-}
-.badge-erosion { background: #faf5ff; color: #805ad5; border: 1px solid #e9d8fd; }
-.badge-night { background: #ebf8ff; color: #3182ce; border: 1px solid #bee3f8; }
-.badge-dragon { background: #fff5f5; color: #e53e3e; border: 1px solid #fed7d7; }
-.badge-curse { background: #f0fff4; color: #38a169; border: 1px solid #c6f6d5; }
-.badge-awaken { background: #fffff0; color: #d69e2e; border: 1px solid #fefcbf; }
-
-/* ===== BOTTOM INFO ===== */
-.bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-.info-box {
-  background: #fff; border-radius: 12px; padding: 14px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;
-}
-.info-box h3 { margin-bottom: 8px; font-size: 0.88em; cursor: pointer; user-select: none; }
-.info-box .collapsible { transition: max-height 0.3s ease, opacity 0.2s; overflow: hidden; }
-.info-box .collapsible.collapsed { max-height: 0 !important; opacity: 0; }
-
-.formula {
-  font-family: 'Consolas', 'Menlo', monospace; color: #718096;
-  font-size: 0.78em; line-height: 1.6;
-}
-.formula code { word-break: break-all; font-size: 0.95em; }
-.formula .fc { color: #e53e3e; }
-.formula .fd { color: #dd6b20; }
-.formula .fe { color: #319795; }
-.formula .ff { color: #6b46c1; font-weight: bold; }
-
-.breakdown { font-size: 0.8em; line-height: 1.7; color: #4a5568; }
-.breakdown .row { display: flex; justify-content: space-between; padding: 2px 0; gap: 8px; }
-.breakdown .row.total { border-top: 1.5px solid #e2e8f0; font-weight: bold; margin-top: 4px; padding-top: 6px; }
-.breakdown .lbl { color: #718096; flex-shrink: 0; }
-
-/* ===== MOBILE ===== */
-@media (max-width: 800px) {
-  .container { padding: 10px; }
-  h1 { font-size: 1.3em; }
-
-  .results { grid-template-columns: repeat(2, 1fr); gap: 6px; }
-  .results-wrap { margin: 0 -10px; padding: 6px 10px 8px; }
-  .result-card { padding: 8px 4px; }
-  .result-value { font-size: 1.15em; }
-  .result-sub { display: block; }
-
-  .panels { grid-template-columns: 1fr; gap: 10px; }
-
-  .bottom-grid { grid-template-columns: 1fr; gap: 10px; }
-
-  .item-row { padding: 6px 8px; font-size: 0.88em; }
-  .item-row .value .badge { display: none; } /* hide erosion badges inline on mobile */
-}
-
-@media (max-width: 400px) {
-  .result-value { font-size: 1em; }
-  .result-label { font-size: 0.62em; }
-  h1 { font-size: 1.15em; }
-}
-
-/* Desktop: show detail sub text */
-@media (min-width: 801px) {
-  .result-sub { display: block; }
-  .result-value { font-size: 1.6em; }
-}
+/* formula box */
+.fb{background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1px solid #e2e8f0;margin-bottom:14px}
+.fb summary{cursor:pointer;font-weight:bold;color:#6b46c1;font-size:.9em;user-select:none}
+.fb .fx{font-family:Consolas,Menlo,monospace;color:#718096;font-size:.78em;line-height:1.7;margin-top:10px}
+.fx .fc{color:#e53e3e}.fx .fd{color:#dd6b20}.fx .fe{color:#319795}.fx .ff{color:#6b46c1;font-weight:bold}
+.warn{background:#fff8f0;padding:10px;border-radius:8px;border:1px solid #fed7aa;margin-top:10px}
+.warn b{color:#c05621;font-size:.85em}
+.warn p{color:#9c6e3a;font-size:.78em;margin-top:4px;line-height:1.6}
 </style>
 </head>
 <body>
-<div class="container">
-  <h1>⚔️ 치명타 / 추가타 계산기</h1>
-  <p class="subtitle">구글 시트 완전 이식 — 공식 100% 일치 검증 완료</p>
+<div class="ct">
+<h1>⚔️ 치명타 / 추가타 계산기</h1>
+<p class="sub">구글 시트 1:1 이식 — 셀 단위 완전 복제</p>
 
-  <div class="results-wrap">
-    <div class="results">
-      <div class="result-card">
-        <div class="result-label">치명타 확률</div>
-        <div class="result-value result-crit" id="res-crit">0%</div>
-        <div class="result-sub" id="res-crit-detail"></div>
-      </div>
-      <div class="result-card">
-        <div class="result-label">치명타 피해</div>
-        <div class="result-value result-cdmg" id="res-cdmg">0%</div>
-        <div class="result-sub" id="res-cdmg-detail"></div>
-      </div>
-      <div class="result-card">
-        <div class="result-label">추가타 확률</div>
-        <div class="result-value result-extra" id="res-extra">0%</div>
-        <div class="result-sub" id="res-extra-detail"></div>
-      </div>
-      <div class="result-card">
-        <div class="result-label">최종 효율</div>
-        <div class="result-value result-final" id="res-final">0%</div>
-        <div class="result-sub" id="res-final-detail"></div>
-      </div>
-    </div>
+<div class="rw">
+<div class="rs">
+  <div class="rc"><div class="rl">치명타 확률</div><div class="rv rv1" id="R1">-</div><div class="rd" id="R1d"></div></div>
+  <div class="rc"><div class="rl">치명타 피해</div><div class="rv rv2" id="R2">-</div><div class="rd" id="R2d"></div></div>
+  <div class="rc"><div class="rl">추가타 확률</div><div class="rv rv3" id="R3">-</div><div class="rd" id="R3d"></div></div>
+  <div class="rc"><div class="rl">최종 효율</div><div class="rv rv4" id="R4">-</div><div class="rd" id="R4d"></div></div>
+</div>
+</div>
+
+<div class="tg">
+  <label><input type="checkbox" id="ero" onchange="calc()"> 🔮 침식 100↑</label>
+  <label><input type="checkbox" id="nit" onchange="calc()"> 🌙 밤의 축복</label>
+</div>
+
+<div class="tbl-wrap">
+
+<!-- ===== 치명타 확률 ===== -->
+<div class="tbl" id="T1">
+  <div class="tbl-h c1">🎯 치명타 확률</div>
+  <div class="th c1"><span></span><span>항목</span><span>기본</span><span>침식</span><span>밤</span></div>
+  <div class="sr">
+    <label>치명타 스탯</label>
+    <input type="number" id="cs" value="9000" inputmode="numeric" oninput="calc()">
+    <span class="bp" style="color:#e53e3e" id="cb">40.91%</span>
   </div>
+  <div id="C1"></div>
+  <div class="tr c1" id="C1T"></div>
+  <div class="str c1" id="C1S1"></div>
+  <div class="str c1" id="C1S2"></div>
+</div>
 
-  <div class="toggles">
-    <label><input type="checkbox" id="erosion100" onchange="recalc()"> 🔮 침식 100↑</label>
-    <label><input type="checkbox" id="nightBlessing" onchange="recalc()"> 🌙 밤의 축복</label>
+<!-- ===== 치명타 피해 ===== -->
+<div class="tbl" id="T2">
+  <div class="tbl-h c2">💥 치명타 피해</div>
+  <div class="th c2"><span></span><span>항목</span><span>기본</span></div>
+  <div class="sr">
+    <label>기본 피해</label>
+    <span class="bp" style="color:#dd6b20" id="db">320.00%</span>
   </div>
+  <div id="C2"></div>
+  <div class="tr c2" id="C2T"></div>
+</div>
 
-  <div class="panels">
-    <div class="panel panel-crit">
-      <div class="panel-header" onclick="togglePanel(this)">
-        <span class="panel-title">🎯 치명타 확률</span>
-        <span class="panel-toggle">▼</span>
-      </div>
-      <div class="panel-body">
-        <div class="base-row">
-          <label>치명타 스탯</label>
-          <input type="number" id="crit-stat" value="9000" inputmode="numeric" onchange="recalc()" oninput="recalc()">
-        </div>
-        <div class="base-row">
-          <label>기본 확률</label>
-          <span class="base-pct" style="color:#e53e3e" id="crit-base-pct">40.91%</span>
-        </div>
-        <div id="crit-items"></div>
-      </div>
-    </div>
-
-    <div class="panel panel-cdmg">
-      <div class="panel-header" onclick="togglePanel(this)">
-        <span class="panel-title">💥 치명타 피해</span>
-        <span class="panel-toggle">▼</span>
-      </div>
-      <div class="panel-body">
-        <div class="base-row">
-          <label>기본 피해 (스탯 연동)</label>
-          <span class="base-pct" style="color:#dd6b20" id="cdmg-base-pct">320.00%</span>
-        </div>
-        <div id="cdmg-items"></div>
-      </div>
-    </div>
-
-    <div class="panel panel-extra">
-      <div class="panel-header" onclick="togglePanel(this)">
-        <span class="panel-title">⚡ 추가타 확률</span>
-        <span class="panel-toggle">▼</span>
-      </div>
-      <div class="panel-body">
-        <div class="base-row">
-          <label>추가타 스탯</label>
-          <input type="number" id="extra-stat" value="3900" inputmode="numeric" onchange="recalc()" oninput="recalc()">
-        </div>
-        <div class="base-row">
-          <label>기본 확률</label>
-          <span class="base-pct" style="color:#319795" id="extra-base-pct">30.00%</span>
-        </div>
-        <div id="extra-items"></div>
-      </div>
-    </div>
+<!-- ===== 추가타 확률 ===== -->
+<div class="tbl" id="T3">
+  <div class="tbl-h c3">⚡ 추가타 확률</div>
+  <div class="th c3"><span></span><span>항목</span><span>기본</span><span>침식</span><span>밤</span></div>
+  <div class="sr">
+    <label>추가타 스탯</label>
+    <input type="number" id="es" value="3900" inputmode="numeric" oninput="calc()">
+    <span class="bp" style="color:#319795" id="eb">30.00%</span>
   </div>
+  <div id="C3"></div>
+  <div class="tr c3" id="C3T"></div>
+  <div class="str c3" id="C3S1"></div>
+  <div class="str c3" id="C3S2"></div>
+</div>
 
-  <div class="bottom-grid">
-    <div class="info-box">
-      <h3 style="color:#6b46c1" onclick="toggleCollapsible(this)">📐 계산 공식 (상세) <span style="font-size:0.8em;color:#a0aec0">▼</span></h3>
-      <div class="collapsible collapsed" style="max-height:2000px">
-        <div class="formula">
-          <div style="margin-bottom:10px">
-            <span class="fc">① 치명타 확률</span> — <b>합산</b><br>
-            <code style="color:#e53e3e">스탯기본 + Σ항목(기본) + Σ(침식) + Σ(밤)</code><br>
-            <span style="color:#888;font-size:0.9em">예: 40.91 + 10 + 40 = 90.91%</span><br>
-            <span style="color:#e53e3e;font-size:0.85em">✅ 시트: 90.91% + 밤11% = 101.91%</span>
-          </div>
-          <div style="margin-bottom:10px">
-            <span class="fd">② 치명타 피해</span> — <b>곱연산</b><br>
-            <code style="color:#dd6b20">스탯기본 × (1 + Σ항목 ÷ 100)</code><br>
-            <span style="color:#888;font-size:0.9em">예: 320 × (1 + 102/100) = 646.40%</span><br>
-            <span style="color:#dd6b20;font-size:0.85em">✅ 시트: 646.40% 일치</span>
-          </div>
-          <div style="margin-bottom:10px">
-            <span class="fe">③ 추가타 확률</span> — <b>곱확률</b><br>
-            <code style="color:#319795">((1+기본÷100) × (1+Σ항목÷100) − 1) × 100</code><br>
-            <span style="color:#888;font-size:0.9em">예: 1.30 × 1.29 − 1 = 67.70%</span><br>
-            <span style="color:#319795;font-size:0.85em">✅ 시트: 67.70% + 침식21.45% = 89.15%</span>
-          </div>
-          <div style="margin-bottom:10px">
-            <span class="ff">④ 최종 효율</span><br>
-            <code style="color:#6b46c1">(1 + 크확 × (크뎀÷100 − 1)) × 100</code><br>
-            <span style="color:#888;font-size:0.9em">"기본" = 치명만 반영 (추가타 별도)</span><br>
-            <span style="color:#6b46c1;font-size:0.85em">✅ 시트: 596.73% 일치</span>
-          </div>
-          <div style="background:#fff8f0;padding:10px;border-radius:8px;border:1px solid #fed7aa;margin-top:6px">
-            <div style="color:#c05621;font-weight:bold;font-size:0.85em">⚠️ 추측 부분</div>
-            <div style="color:#9c6e3a;font-size:0.8em;margin-top:4px;line-height:1.5">
-              <b>스탯→기본값 변환</b>이 시트에 미기재.<br>
-              기준값 1개로 선형 근사 역산:<br>
-              • 치확: <code>스탯÷22000×100</code> (9000→40.91%)<br>
-              • 치뎀: <code>200+스탯×120÷9000</code> (9000→320%)<br>
-              • 추확: <code>스탯÷13000×100</code> (3900→30%)<br>
-              기본값에서는 정확하나 <b>다른 스탯은 실제와 다를 수 있음</b>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="info-box">
-      <h3 style="color:#4a5568" onclick="toggleCollapsible(this)">📊 계산 내역 <span style="font-size:0.8em;color:#a0aec0">▼</span></h3>
-      <div class="collapsible collapsed" style="max-height:2000px">
-        <div class="breakdown" id="breakdown"></div>
-      </div>
-    </div>
-  </div>
+</div>
+
+<!-- 효율 -->
+<div class="eff">
+  <span class="eff-label">치명타 최종 효율 (기본)</span>
+  <span class="eff-val" id="EF">-</span>
+</div>
+
+<!-- 공식 -->
+<details class="fb">
+<summary>📐 계산 공식 (상세)</summary>
+<div class="fx">
+<p><span class="fc">① 치명타 확률</span> — <b>합산 (Additive)</b></p>
+<p><code style="color:#e53e3e">치명확률 = 스탯기본 + Σ항목(기본) + Σ항목(침식) + Σ항목(밤축복)</code></p>
+<p style="color:#888">예: 40.91 + 용사냥꾼10 + 검술사P1 40 = 90.91%</p>
+<p style="color:#e53e3e;font-size:.95em">✅ 시트 검증 완료: 90.91% + 밤11% = 101.91%</p>
+<br>
+<p><span class="fd">② 치명타 피해</span> — <b>곱연산 (Multiplicative)</b></p>
+<p><code style="color:#dd6b20">치명피해 = 스탯기본 × (1 + Σ적용항목 ÷ 100)</code></p>
+<p style="color:#888">예: 320 × (1 + 102÷100) = 320 × 2.02 = 646.40%</p>
+<p style="color:#dd6b20;font-size:.95em">✅ 시트 검증 완료: 646.40% 일치</p>
+<br>
+<p><span class="fe">③ 추가타 확률</span> — <b>곱확률 (Multiplicative Probability)</b></p>
+<p><code style="color:#319795">추가확률 = ((1+스탯기본÷100) × (1+Σ항목÷100) − 1) × 100</code></p>
+<p style="color:#888">예: (1+0.30)×(1+0.70)−1 = 1.30×1.70−1 = 121.00%</p>
+<p style="color:#319795;font-size:.95em">✅ 시트 검증 완료: 121.00% + 침식21.45% = 142.45%</p>
+<br>
+<p><span class="ff">④ 최종 효율 (기본)</span></p>
+<p><code style="color:#6b46c1">효율 = (1 + 치명확률÷100 × (치명피해÷100 − 1)) × 100</code></p>
+<p style="color:#888">예: (1 + 0.9091 × (6.464−1)) × 100 = 596.73%</p>
+<p style="color:#6b46c1;font-size:.95em">✅ 시트 검증 완료: 596.73% 일치</p>
+
+<div class="warn">
+<b>⚠️ 추측 부분 (시트에 공식 미기재)</b>
+<p><b>스탯 → 기본값 변환 공식</b>이 시트에 명시 안 됨. 기준값 1개로 선형 역산:<br>
+• 치명확률: <code>스탯 ÷ 22000 × 100</code> (9000→40.91%)<br>
+• 치명피해: <code>200 + 스탯 × 120 ÷ 9000</code> (9000→320%)<br>
+• 추가확률: <code>스탯 ÷ 13000 × 100</code> (3900→30%)<br>
+기본값에서는 정확하지만 <b>다른 스탯 입력 시 실제 게임과 다를 수 있음</b></p>
+</div>
+</div>
+</details>
+
 </div>
 
 <script>
-// ===== PANEL TOGGLE =====
-function togglePanel(header) {
-  const body = header.nextElementSibling;
-  const arrow = header.querySelector('.panel-toggle');
-  if (body.classList.contains('collapsed')) {
-    body.classList.remove('collapsed');
-    body.style.maxHeight = body.scrollHeight + 'px';
-    arrow.classList.remove('collapsed');
-  } else {
-    body.classList.add('collapsed');
-    arrow.classList.add('collapsed');
-  }
-}
+// ===== SHEET DATA — ROW-BY-ROW EXACT COPY =====
+// Each row: [name, defaultChecked, base%, erosion%, night%]
+// Empty name = 시트에서 이름 없는 빈 행
 
-function toggleCollapsible(h3) {
-  const c = h3.nextElementSibling;
-  const arrow = h3.querySelector('span');
-  if (c.classList.contains('collapsed')) {
-    c.classList.remove('collapsed');
-    c.style.maxHeight = c.scrollHeight + 'px';
-    if (arrow) arrow.textContent = '▲';
-  } else {
-    c.classList.add('collapsed');
-    if (arrow) arrow.textContent = '▼';
-  }
-}
-
-// ===== DATA =====
-const CRIT_ITEMS = [
-  { name: "아티팩트: 강인함", base: 1.8, erosion: 0, night: 0, def: false },
-  { name: "바위 칼날 30스택", base: 15.0, erosion: 0, night: 0, def: false },
-  { name: "날 선 적의 (저주)", base: 6.0, erosion: 0, night: 0, def: false, badge: "curse" },
-  { name: "잠들지 않는 불 🐉2파츠", base: 12.5, erosion: 0, night: 0, def: false, badge: "dragon" },
-  { name: "금 간 봉인", base: 16.5, erosion: 16.5, night: 0, def: false },
-  { name: "첫 번째 서약 (각성)", base: 0, erosion: 0, night: 11.0, def: true, badge: "awaken" },
-  { name: "용 사냥꾼 ●", base: 10.0, erosion: 0, night: 0, def: true },
-  { name: "영원한 밤", base: 7.0, erosion: 0, night: 0, def: false },
-  { name: "전사 P5", base: 10.0, erosion: 0, night: 0, def: false },
-  { name: "대검전사 A5 광전사", base: 15.0, erosion: 0, night: 0, def: false },
-  { name: "검술사 P1", base: 40.0, erosion: 0, night: 0, def: true },
-  { name: "기사 P4", base: 10.0, erosion: 0, night: 0, def: false },
-  { name: "장궁병 P1", base: 15.0, erosion: 0, night: 0, def: false },
-  { name: "음유시인 P4 3스택", base: 9.0, erosion: 0, night: 0, def: false },
-  { name: "댄서 P1 10스택", base: 10.0, erosion: 0, night: 0, def: false },
-  { name: "격투가 A1 약점", base: 25.0, erosion: 0, night: 0, def: false },
-  { name: "듀얼블레이드 P5", base: 15.0, erosion: 0, night: 0, def: false },
-  { name: "화염술사 S2", base: 12.0, erosion: 0, night: 0, def: false },
-  { name: "암흑술사 S2", base: 10.0, erosion: 0, night: 0, def: false },
-];
-const CDMG_ITEMS = [
-  { name: "억눌린 충동 (저주)", base: 5.0, def: false, badge: "curse" },
-  { name: "죽음 ●", base: 20.0, def: false },
-  { name: "승전 최대치", base: 22.0, def: true },
-  { name: "칼바람", base: 10.0, def: false },
-  { name: "용 사냥꾼 ●", base: 10.0, def: true },
-  { name: "초월", base: 15.0, def: false },
-  { name: "검술사 P1", base: 30.0, def: true },
-  { name: "검술사 P3", base: 5.0, def: true },
-  { name: "검술사 P4", base: 5.0, def: true },
-  { name: "검술사 P5", base: 30.0, def: true },
-  { name: "석궁사수 P3", base: 5.0, def: false },
-  { name: "음유시인 P5", base: 20.0, def: false },
-];
-const EXTRA_ITEMS = [
-  { name: "아티팩트: 기교", base: 1.8, erosion: 0, night: 0, def: false },
-  { name: "날 선 적의 (저주)", base: 6.0, erosion: 0, night: 0, def: false, badge: "curse" },
-  { name: "얼음 발톱 🐉2파츠", base: 12.5, erosion: 0, night: 0, def: true, badge: "dragon" },
-  { name: "무너진 경계", base: 16.5, erosion: 16.5, night: 0, def: true },
-  { name: "교차하는 사슬 (각성)", base: 0, erosion: 0, night: 11.0, def: false, badge: "awaken" },
-  { name: "영원한 밤", base: 7.0, erosion: 0, night: 0, def: true },
-  { name: "백금 천칭 평타", base: 21.0, erosion: 0, night: 0, def: false },
-  { name: "기사 P4", base: 10.0, erosion: 0, night: 0, def: false },
-  { name: "음유시인 P4 3스택", base: 9.0, erosion: 0, night: 0, def: true },
-  { name: "댄서 P1 10스택", base: 10.0, erosion: 0, night: 0, def: false },
-  { name: "도적 P2", base: 15.0, erosion: 0, night: 0, def: true },
-  { name: "듀얼블레이드 A4", base: 15.0, erosion: 0, night: 0, def: false },
-  { name: "전격술사 S2", base: 10.0, erosion: 0, night: 0, def: true },
+const D1 = [ // 치명타 확률 (R02~R22)
+  ["아티팩트: 강인함",    false, 1.80, 0, 0],
+  ["바위 칼날 30스택",    false, 15.00, 0, 0],
+  ["",                    false, 0, 0, 0],        // R04 빈 행
+  ["날 선 적의 (저주)",   false, 6.00, 0, 0],
+  ["잠들지 않는 불 🐉2파츠", false, 12.50, 0, 0],
+  ["금 간 봉인",          false, 16.50, 16.50, 0],
+  ["첫 번째 서약 (각성)", true,  0, 0, 11.00],
+  ["용 사냥꾼 ●",         true,  10.00, 0, 0],
+  ["영원한 밤",           false, 7.00, 0, 0],
+  ["",                    false, 0, 0, 0],        // R11 빈 행
+  ["전사 P5",             false, 10.00, 0, 0],
+  ["대검전사 A5광전사",   false, 15.00, 0, 0],
+  ["검술사 P1",           true,  40.00, 0, 0],
+  ["기사 P4",             false, 10.00, 0, 0],
+  ["장궁병 P1",           false, 15.00, 0, 0],
+  ["음유시인 P4 3스택",   false, 9.00, 0, 0],
+  ["댄서 P1 10스택",      false, 10.00, 0, 0],
+  ["격투가 A1약점",       false, 25.00, 0, 0],
+  ["듀얼블레이드 P5",     false, 15.00, 0, 0],
+  ["화염술사 S2",         false, 12.00, 0, 0],
+  ["암흑술사 S2",         false, 10.00, 0, 0],
 ];
 
-// ===== STAT FORMULAS =====
-function critStatToRate(s) { return s / 22000 * 100; }
-function extraStatToRate(s) { return s / 13000 * 100; }
-function critStatToDmg(s) { return 200 + (s / 9000) * 120; }
+const D2 = [ // 치명타 피해 (R02~R22, col 6~8)
+  // R02: empty
+  // R03:
+  ["억눌린 충동 (저주)",  false, 5.00],
+  ["죽음 ●",              false, 20.00],
+  ["승전 최대치",         true,  22.00],
+  ["칼바람",              false, 10.00],
+  ["",                    false, 0],     // R07 빈 행
+  ["",                    false, 0],     // R08 빈 행
+  ["용 사냥꾼 ●",         true,  10.00],
+  ["초월",                false, 15.00],
+  ["",                    false, 0],     // R11 빈 행
+  ["검술사 P1",           true,  30.00],
+  ["검술사 P3",           true,  5.00],
+  ["검술사 P4",           true,  5.00],
+  ["검술사 P5",           true,  30.00],
+  ["석궁사수 P3",         false, 5.00],
+  ["음유시인 P5",         false, 20.00],
+  ["",                    false, 0],     // R18 빈 행
+  ["",                    false, 0],     // R19 빈 행
+  ["",                    false, 0],     // R20 빈 행
+  ["",                    false, 0],     // R21 빈 행
+  ["",                    false, 0],     // R22 빈 행
+];
+
+const D3 = [ // 추가타 확률 (R02~R22, col 10~14)
+  ["아티팩트: 기교",       false, 1.80, 0, 0],
+  ["",                     false, 0, 0, 0],       // R03 빈 행
+  ["",                     false, 0, 0, 0],       // R04 빈 행
+  ["날 선 적의 (저주)",    false, 6.00, 0, 0],
+  ["얼음 발톱 🐉2파츠",   true,  12.50, 0, 0],
+  ["무너진 경계",          true,  16.50, 16.50, 0],
+  ["교차하는 사슬 (각성)", false, 0, 0, 11.00],
+  ["",                     false, 0, 0, 0],       // R09 빈 행
+  ["영원한 밤",            true,  7.00, 0, 0],
+  ["백금 천칭 평타",       false, 21.00, 0, 0],
+  ["기사 P4",              false, 10.00, 0, 0],
+  ["음유시인 P4 3스택",    true,  9.00, 0, 0],
+  ["댄서 P1 10스택",       false, 10.00, 0, 0],
+  ["도적 P2",              true,  15.00, 0, 0],
+  ["듀얼블레이드 A4",      false, 15.00, 0, 0],
+  ["",                     false, 0, 0, 0],       // R17 빈 행
+  ["",                     false, 0, 0, 0],       // R18 빈 행
+  ["",                     false, 0, 0, 0],       // R19 빈 행
+  ["",                     true,  0, 0, 0],       // R20 빈 행 TRUE
+  ["전격술사 S2",          true,  10.00, 0, 0],
+  ["",                     true,  0, 0, 0],       // R22 빈 행 TRUE
+];
+
+// ===== STAT FORMULAS (추측 — 선형 근사) =====
+function cRate(s){return s/22000*100}
+function cDmg(s){return 200+(s/9000)*120}
+function eRate(s){return s/13000*100}
 
 // ===== RENDER =====
-function renderItems(cid, items, prefix) {
-  const el = document.getElementById(cid);
+function renderCol(el, data, cls, cols) {
   let h = '';
-  items.forEach((item, i) => {
-    const id = `${prefix}-${i}`;
-    let badges = '';
-    if (item.badge === 'curse') badges = '<span class="badge badge-curse">저주</span>';
-    else if (item.badge === 'dragon') badges = '<span class="badge badge-dragon">🐉</span>';
-    else if (item.badge === 'awaken') badges = '<span class="badge badge-awaken">각성</span>';
+  data.forEach((r, i) => {
+    const id = `${cls}-${i}`;
+    const nm = r[0];
+    const chk = r[1] ? 'checked' : '';
+    const isEmpty = !nm && r[2] === 0 && (r.length < 4 || (r[3] === 0 && r[4] === 0));
 
-    let vs = [];
-    if (item.base > 0) vs.push(item.base.toFixed(1) + '%');
-    if (item.erosion > 0) vs.push('<span class="badge badge-erosion">침식+' + item.erosion.toFixed(1) + '%</span>');
-    if (item.night > 0) vs.push('<span class="badge badge-night">밤+' + item.night.toFixed(1) + '%</span>');
-
-    h += `<div class="item-row" onclick="toggleCheck('${id}')">
-      <input type="checkbox" id="${id}" ${item.def ? 'checked' : ''} onchange="recalc()" onclick="event.stopPropagation()">
-      <span class="name">${item.name}</span>
-      ${badges}
-      <span class="value">${vs.join(' ')}</span>
-    </div>`;
+    if (cols === 5) {
+      // 치명타확률 / 추가타확률
+      const b = r[2] ? r[2].toFixed(2)+'%' : '';
+      const e = r[3] ? r[3].toFixed(2)+'%' : '';
+      const n = r[4] ? r[4].toFixed(2)+'%' : '';
+      h += `<div class="ir ${cls}${isEmpty?' empty':''}" onclick="tgl('${id}')">
+        <input type="checkbox" id="${id}" ${chk} onchange="calc()" onclick="event.stopPropagation()">
+        <span class="nm" title="${nm}">${nm||'—'}</span>
+        <span class="vl">${b}</span>
+        <span class="vl">${e}</span>
+        <span class="vl">${n}</span>
+      </div>`;
+    } else {
+      // 치명타피해
+      const b = r[2] ? r[2].toFixed(2)+'%' : '';
+      h += `<div class="ir ${cls}${isEmpty?' empty':''}" onclick="tgl('${id}')">
+        <input type="checkbox" id="${id}" ${chk} onchange="calc()" onclick="event.stopPropagation()">
+        <span class="nm" title="${nm}">${nm||'—'}</span>
+        <span class="vl">${b}</span>
+      </div>`;
+    }
   });
-  el.innerHTML = h;
+  document.getElementById(el).innerHTML = h;
 }
 
-function toggleCheck(id) {
+function tgl(id) {
   const cb = document.getElementById(id);
   cb.checked = !cb.checked;
-  recalc();
+  calc();
 }
 
 // ===== CALC =====
-function recalc() {
-  const erosion = document.getElementById('erosion100').checked;
-  const night = document.getElementById('nightBlessing').checked;
-  const critStat = parseFloat(document.getElementById('crit-stat').value) || 0;
-  const extraStat = parseFloat(document.getElementById('extra-stat').value) || 0;
+function calc() {
+  const ero = document.getElementById('ero').checked;
+  const nit = document.getElementById('nit').checked;
+  const cs = parseFloat(document.getElementById('cs').value)||0;
+  const es = parseFloat(document.getElementById('es').value)||0;
 
-  const critBase = critStatToRate(critStat);
-  const cdmgBase = critStatToDmg(critStat);
-  const extraBase = extraStatToRate(extraStat);
+  const cbv = cRate(cs);
+  const dbv = cDmg(cs);
+  const ebv = eRate(es);
 
-  document.getElementById('crit-base-pct').textContent = critBase.toFixed(2) + '%';
-  document.getElementById('cdmg-base-pct').textContent = cdmgBase.toFixed(2) + '%';
-  document.getElementById('extra-base-pct').textContent = extraBase.toFixed(2) + '%';
+  document.getElementById('cb').textContent = cbv.toFixed(2)+'%';
+  document.getElementById('db').textContent = dbv.toFixed(2)+'%';
+  document.getElementById('eb').textContent = ebv.toFixed(2)+'%';
 
-  // --- 치명타 확률: ADDITIVE ---
-  let critItemBase = 0, critErosion = 0, critNight = 0;
-  CRIT_ITEMS.forEach((item, i) => {
-    if (document.getElementById(`crit-${i}`).checked) {
-      critItemBase += item.base;
-      if (erosion) critErosion += item.erosion;
-      if (night) critNight += item.night;
+  // ① 치명타 확률: ADDITIVE
+  let c1b=0, c1e=0, c1n=0;
+  D1.forEach((r,i) => {
+    if (document.getElementById(`c1-${i}`).checked) {
+      c1b += r[2];
+      if (ero) c1e += r[3];
+      if (nit) c1n += r[4];
     }
   });
-  const critTotal = critBase + critItemBase + critErosion + critNight;
+  const c1total = cbv + c1b + c1e + c1n;
 
-  // --- 치명타 피해: base × (1 + itemSum/100) ---
-  let cdmgItemSum = 0;
-  CDMG_ITEMS.forEach((item, i) => {
-    if (document.getElementById(`cdmg-${i}`).checked) cdmgItemSum += item.base;
+  // Row 23: 총합, 기본%, +침식%, +밤%
+  const c1ero_only = cbv + c1b + c1e; // 침식 적용 시
+  const c1nit_only = cbv + c1b + c1n; // 밤 적용 시 (정확히는 시트가 기본+침식=col3, 기본+밤=col4 쌓는 구조)
+  // 실제 시트 R23: 기본=90.91%, +침식=+0.00%, +밤=+11.00%
+  // R24: col3=90.91%(기본+침식), col4=101.91%(기본+침식+밤)
+  // R25: col3=101.91%(전체)
+
+  document.getElementById('C1T').innerHTML = `
+    <span></span><span class="nm">치명타 확률 총합</span>
+    <span class="vl">${(cbv+c1b).toFixed(2)}%</span>
+    <span class="vl">+${c1e.toFixed(2)}%</span>
+    <span class="vl">+${c1n.toFixed(2)}%</span>`;
+
+  document.getElementById('C1S1').innerHTML = `
+    <span></span><span></span><span></span>
+    <span class="vl">${(cbv+c1b+c1e).toFixed(2)}%</span>
+    <span class="vl">${(cbv+c1b+c1n).toFixed(2)}%</span>`;
+
+  document.getElementById('C1S2').innerHTML = `
+    <span></span><span></span><span></span>
+    <span class="vl">${(cbv+c1b+c1e+c1n).toFixed(2)}%</span>
+    <span></span>`;
+
+  // ② 치명타 피해: base × (1 + itemSum/100)
+  let c2sum = 0;
+  D2.forEach((r,i) => {
+    if (document.getElementById(`c2-${i}`).checked) c2sum += r[2];
   });
-  const cdmgTotal = cdmgBase * (1 + cdmgItemSum / 100);
+  const c2total = dbv * (1 + c2sum / 100);
 
-  // --- 추가타 확률: 곱확률 ---
-  let extraItemBase = 0, extraErosion = 0, extraNight = 0;
-  EXTRA_ITEMS.forEach((item, i) => {
-    if (document.getElementById(`extra-${i}`).checked) {
-      extraItemBase += item.base;
-      if (erosion) extraErosion += item.erosion;
-      if (night) extraNight += item.night;
+  document.getElementById('C2T').innerHTML = `
+    <span></span><span class="nm">치명타 피해 총합</span>
+    <span class="vl">${c2total.toFixed(2)}%</span>`;
+
+  // ③ 추가타 확률: 곱확률
+  let c3b=0, c3e=0, c3n=0;
+  D3.forEach((r,i) => {
+    if (document.getElementById(`c3-${i}`).checked) {
+      c3b += r[2];
+      if (ero) c3e += r[3];
+      if (nit) c3n += r[4];
     }
   });
-  const extraItemTotal = extraItemBase + extraErosion + extraNight;
-  const extraTotal = ((1 + extraBase / 100) * (1 + extraItemTotal / 100) - 1) * 100;
+  const c3items = c3b + c3e + c3n;
+  const c3total = ((1 + ebv/100) * (1 + c3items/100) - 1) * 100;
 
-  // --- 최종 효율 ---
-  const effCritRate = Math.min(critTotal, 100) / 100;
-  const finalEff = (1 + effCritRate * (cdmgTotal / 100 - 1)) * 100;
+  // 추가타 총합 행 (R23 구조)
+  const c3base_only = ((1+ebv/100)*(1+c3b/100)-1)*100;
+  const c3ero_add = ((1+ebv/100)*(1+(c3b+c3e)/100)-1)*100 - c3base_only;
+  const c3nit_add = ((1+ebv/100)*(1+(c3b+c3n)/100)-1)*100 - c3base_only;
+  const c3with_ero = c3base_only + c3ero_add;
+  const c3with_nit = c3base_only + c3nit_add;
+  const c3all = ((1+ebv/100)*(1+(c3b+c3e+c3n)/100)-1)*100;
 
-  // --- DISPLAY ---
-  document.getElementById('res-crit').textContent = critTotal.toFixed(2) + '%';
-  document.getElementById('res-cdmg').textContent = cdmgTotal.toFixed(2) + '%';
-  document.getElementById('res-extra').textContent = extraTotal.toFixed(2) + '%';
-  document.getElementById('res-final').textContent = finalEff.toFixed(2) + '%';
+  document.getElementById('C3T').innerHTML = `
+    <span></span><span class="nm">추가타 확률 총합</span>
+    <span class="vl">${c3base_only.toFixed(2)}%</span>
+    <span class="vl">+${c3ero_add.toFixed(2)}%</span>
+    <span class="vl">+${c3nit_add.toFixed(2)}%</span>`;
 
-  let cd = `${critBase.toFixed(1)}+${critItemBase.toFixed(1)}`;
-  if (critErosion > 0) cd += `+침${critErosion.toFixed(1)}`;
-  if (critNight > 0) cd += `+밤${critNight.toFixed(1)}`;
-  if (critTotal > 100) cd += ' ⚠️초과';
-  document.getElementById('res-crit-detail').textContent = cd;
+  document.getElementById('C3S1').innerHTML = `
+    <span></span><span></span><span></span>
+    <span class="vl">${(c3base_only+c3ero_add).toFixed(2)}%</span>
+    <span class="vl">${(c3base_only+c3nit_add).toFixed(2)}%</span>`;
 
-  document.getElementById('res-cdmg-detail').textContent =
-    `${cdmgBase.toFixed(0)}×(1+${cdmgItemSum.toFixed(0)}%)`;
+  document.getElementById('C3S2').innerHTML = `
+    <span></span><span></span><span></span>
+    <span class="vl">${c3all.toFixed(2)}%</span>
+    <span></span>`;
 
-  let ed = `(1+${extraBase.toFixed(0)}%)×(1+${extraItemTotal.toFixed(0)}%)-1`;
-  if (extraTotal > 100) ed += ' ⚠️초과';
-  document.getElementById('res-extra-detail').textContent = ed;
+  // ④ 최종 효율: (1 + critRate × (critDmg/100 - 1)) × 100
+  // 시트의 "기본" = 침식/밤 미적용 기준
+  const effCrit = Math.min(cbv + c1b, 100) / 100;
+  const effVal = (1 + effCrit * (c2total/100 - 1)) * 100;
 
-  document.getElementById('res-final-detail').textContent =
-    `1+${(effCritRate*100).toFixed(0)}%×(${cdmgTotal.toFixed(0)}%-1)`;
+  // 결과 표시
+  document.getElementById('R1').textContent = c1total.toFixed(2)+'%';
+  document.getElementById('R2').textContent = c2total.toFixed(2)+'%';
+  document.getElementById('R3').textContent = c3total.toFixed(2)+'%';
+  document.getElementById('R4').textContent = effVal.toFixed(2)+'%';
 
-  // --- Breakdown ---
-  let bk = '';
-  bk += '<div style="font-weight:bold;color:#c53030;margin-bottom:4px">🎯 치명타 확률 [합산]</div>';
-  bk += mkRow('스탯 기본', critBase.toFixed(2) + '%');
-  if (critItemBase > 0) bk += mkRow('항목 합', '+' + critItemBase.toFixed(2) + '%');
-  if (critErosion > 0) bk += mkRow('침식', '+' + critErosion.toFixed(2) + '%');
-  if (critNight > 0) bk += mkRow('밤축복', '+' + critNight.toFixed(2) + '%');
-  bk += mkRow('총합', critTotal.toFixed(2) + '%', true);
+  document.getElementById('R1d').textContent = `기본${(cbv+c1b).toFixed(1)}${c1e?'+침'+c1e.toFixed(1):''}${c1n?'+밤'+c1n.toFixed(1):''}`;
+  document.getElementById('R2d').textContent = `${dbv.toFixed(0)}×(1+${c2sum.toFixed(0)}%)`;
+  document.getElementById('R3d').textContent = `(1+${ebv.toFixed(0)}%)×(1+${c3items.toFixed(0)}%)-1`;
+  document.getElementById('R4d').textContent = `1+${(effCrit*100).toFixed(0)}%×(${c2total.toFixed(0)}%-1)`;
 
-  bk += '<div style="font-weight:bold;color:#c05621;margin:8px 0 4px">💥 치명타 피해 [곱연산]</div>';
-  bk += mkRow('스탯 기본', cdmgBase.toFixed(2) + '%');
-  bk += mkRow('항목 합', cdmgItemSum.toFixed(2) + '%');
-  bk += mkRow('공식', `${cdmgBase.toFixed(0)}×(1+${cdmgItemSum.toFixed(0)}/100)`);
-  bk += mkRow('총합', cdmgTotal.toFixed(2) + '%', true);
-
-  bk += '<div style="font-weight:bold;color:#2c7a7b;margin:8px 0 4px">⚡ 추가타 확률 [곱확률]</div>';
-  bk += mkRow('스탯 기본', extraBase.toFixed(2) + '%');
-  bk += mkRow('항목합', extraItemTotal.toFixed(2) + '%');
-  bk += mkRow('공식', `(1+${(extraBase/100).toFixed(2)})×(1+${(extraItemTotal/100).toFixed(2)})-1`);
-  bk += mkRow('총합', extraTotal.toFixed(2) + '%', true);
-
-  bk += '<div style="font-weight:bold;color:#6b46c1;margin:8px 0 4px">🏆 최종 효율</div>';
-  bk += mkRow('공식', `(1+${(effCritRate).toFixed(2)}×${(cdmgTotal/100-1).toFixed(2)})`);
-  bk += mkRow('결과', finalEff.toFixed(2) + '%', true);
-
-  document.getElementById('breakdown').innerHTML = bk;
-}
-
-function mkRow(label, val, total) {
-  return `<div class="row${total?' total':''}">
-    <span class="lbl">${label}</span>
-    <span>${val}</span>
-  </div>`;
+  document.getElementById('EF').textContent = effVal.toFixed(2)+'%';
 }
 
 // ===== INIT =====
-renderItems('crit-items', CRIT_ITEMS, 'crit');
-renderItems('cdmg-items', CDMG_ITEMS, 'cdmg');
-renderItems('extra-items', EXTRA_ITEMS, 'extra');
-recalc();
-
-// Auto-expand panels on desktop
-if (window.innerWidth > 800) {
-  document.querySelectorAll('.panel-body').forEach(b => b.style.maxHeight = b.scrollHeight + 'px');
-} else {
-  document.querySelectorAll('.panel-body').forEach(b => b.style.maxHeight = b.scrollHeight + 'px');
-}
+renderCol('C1', D1, 'c1', 5);
+renderCol('C2', D2, 'c2', 3);
+renderCol('C3', D3, 'c3', 5);
+calc();
 </script>
 </body>
 </html>
