@@ -201,20 +201,58 @@ h1 {
 
   <div class="bottom-grid">
     <div class="info-box">
-      <h3 style="color:#6b46c1">📐 계산 공식</h3>
+      <h3 style="color:#6b46c1">📐 계산 공식 (상세)</h3>
       <div class="formula">
-        <span class="fc">치명타 확률</span> = 기본 + Σ항목 <b>[합산]</b><br>
-        <span style="color:#aaa;font-size:0.9em">└ 침식/밤축복도 단순 합산</span><br><br>
-        <span class="fd">치명타 피해</span> = 기본 × (1 + Σ항목÷100) <b>[곱연산]</b><br>
-        <span style="color:#aaa;font-size:0.9em">└ 항목이 기본 피해에 비례해서 증폭</span><br><br>
-        <span class="fe">추가타 확률</span> = (1+기본÷100) × (1+Σ항목÷100) − 1 <b>[곱확률]</b><br>
-        <span style="color:#aaa;font-size:0.9em">└ 침식/밤축복은 항목합에 포함 후 곱셈</span><br><br>
-        <span class="ff">최종 효율</span> = (1 + 치명확률 × (치명피해÷100 − 1)) × 100<br>
-        <span style="color:#aaa;font-size:0.9em">└ "기본" = 치명타만 반영 (추가타 별도)</span>
+        <div style="margin-bottom:12px">
+          <span class="fc">① 치명타 확률</span> — <b>합산 (Additive)</b><br>
+          <code style="color:#e53e3e">치명확률 = 스탯기본 + Σ항목(기본) + Σ항목(침식) + Σ항목(밤축복)</code><br>
+          <span style="color:#888;font-size:0.9em">예: 40.91% + 용사냥꾼10% + 검술사P1 40% = 90.91%</span><br>
+          <span style="color:#888;font-size:0.9em">침식/밤축복 ON이면 해당 컬럼 값을 추가로 합산</span><br>
+          <span style="color:#e53e3e;font-size:0.85em">✅ 시트 검증: 90.91% + 침식0% + 밤11% = 101.91% 일치</span>
+        </div>
+
+        <div style="margin-bottom:12px">
+          <span class="fd">② 치명타 피해</span> — <b>곱연산 (Multiplicative)</b><br>
+          <code style="color:#dd6b20">치명피해 = 스탯기본 × (1 + Σ적용항목 ÷ 100)</code><br>
+          <span style="color:#888;font-size:0.9em">단순합이 아님! 기본값에 비례해서 증폭됨</span><br>
+          <span style="color:#888;font-size:0.9em">예: 320% × (1 + 102%÷100) = 320% × 2.02 = 646.40%</span><br>
+          <span style="color:#dd6b20;font-size:0.85em">✅ 시트 검증: 646.40% 정확히 일치</span>
+        </div>
+
+        <div style="margin-bottom:12px">
+          <span class="fe">③ 추가타 확률</span> — <b>곱확률 (Multiplicative Probability)</b><br>
+          <code style="color:#319795">추가확률 = ((1 + 스탯기본÷100) × (1 + Σ항목÷100) − 1) × 100</code><br>
+          <span style="color:#888;font-size:0.9em">치명타 확률(합산)과 다르게 곱셈 구조!</span><br>
+          <span style="color:#888;font-size:0.9em">예: (1+0.30) × (1+0.29) − 1 = 1.30×1.29−1 = 67.70%</span><br>
+          <span style="color:#888;font-size:0.9em">침식/밤축복은 항목합에 포함된 후 곱셈 적용</span><br>
+          <span style="color:#319795;font-size:0.85em">✅ 시트 검증: 67.70% + 침식21.45% = 89.15% 일치</span>
+        </div>
+
+        <div style="margin-bottom:12px">
+          <span class="ff">④ 최종 효율 (기본)</span><br>
+          <code style="color:#6b46c1">효율 = (1 + 치명확률÷100 × (치명피해÷100 − 1)) × 100</code><br>
+          <span style="color:#888;font-size:0.9em">시트의 "기본" 효율 = 치명타만 반영 (추가타 별도)</span><br>
+          <span style="color:#888;font-size:0.9em">예: (1 + 0.9091 × (6.464−1)) × 100 = 596.73%</span><br>
+          <span style="color:#6b46c1;font-size:0.85em">✅ 시트 검증: 596.73% 정확히 일치</span>
+        </div>
+
+        <div style="background:#fff8f0;padding:10px;border-radius:8px;border:1px solid #fed7aa;margin-top:8px">
+          <div style="color:#c05621;font-weight:bold;font-size:0.88em">⚠️ 추측 부분 (시트에 공식 미기재)</div>
+          <div style="color:#9c6e3a;font-size:0.82em;margin-top:4px;line-height:1.6">
+            <b>스탯 → 기본값 변환 공식</b>이 시트에 명시되어 있지 않음.<br>
+            시트의 기준값이 각각 1개뿐이라 <b>선형 근사</b>로 역산함:<br>
+            • 치명타 확률: <code>스탯 ÷ 22000 × 100</code> (9000→40.91%)<br>
+            • 치명타 피해: <code>200 + 스탯 × 120 ÷ 9000</code> (9000→320%)<br>
+            • 추가타 확률: <code>스탯 ÷ 13000 × 100</code> (3900→30%)<br><br>
+            기본값(9000/3900)에서는 정확하지만,<br>
+            <b>다른 스탯을 입력하면 실제 게임과 다를 수 있음!</b><br>
+            실제 공식이 로그/S자 곡선일 가능성 있음.
+          </div>
+        </div>
       </div>
     </div>
     <div class="info-box">
-      <h3 style="color:#4a5568">📊 계산 내역</h3>
+      <h3 style="color:#4a5568">📊 계산 내역 (실시간)</h3>
       <div class="breakdown" id="breakdown"></div>
     </div>
   </div>
