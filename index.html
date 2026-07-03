@@ -95,6 +95,18 @@ h1{text-align:center;font-size:1.5em;margin-bottom:4px;color:#1a202c}
 .rst-btn{background:#e2e8f0;color:#4a5568;border:none;border-radius:8px;padding:6px 14px;font-size:.82em;font-weight:600;cursor:pointer;transition:background .15s}
 .rst-btn:hover{background:#cbd5e0}
 .rst-btn:active{background:#a0aec0;color:#fff}
+
+/* breakdown detail */
+.bd-body{font-size:.82em;line-height:1.8;margin-top:10px;color:#4a5568}
+.bd-body .bd-sec{margin-bottom:14px;padding:10px 12px;background:#f7fafc;border-radius:10px;border:1px solid #edf2f7}
+.bd-body .bd-title{font-weight:bold;font-size:.95em;margin-bottom:6px;padding-bottom:4px;border-bottom:1.5px solid #e2e8f0}
+.bd-body .bd-title.c1{color:#c53030}.bd-body .bd-title.c2{color:#c05621}.bd-body .bd-title.c3{color:#2c7a7b}.bd-body .bd-title.c4{color:#6b46c1}
+.bd-body .bd-item{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px dotted #e2e8f0}
+.bd-body .bd-item:last-child{border-bottom:none}
+.bd-body .bd-item .bd-nm{color:#718096}
+.bd-body .bd-item .bd-vl{font-weight:600;font-family:Consolas,Menlo,monospace}
+.bd-body .bd-formula{background:#fff;padding:8px 10px;border-radius:8px;border:1px solid #e2e8f0;margin-top:6px;font-family:Consolas,Menlo,monospace;font-size:.95em;word-break:break-all}
+.bd-body .bd-result{font-weight:bold;font-size:1.05em;margin-top:4px}
 </style>
 </head>
 <body>
@@ -168,6 +180,12 @@ h1{text-align:center;font-size:1.5em;margin-bottom:4px;color:#1a202c}
   <span class="eff-label">치명타 최종 효율 (기본)</span>
   <span class="eff-val" id="EF">-</span>
 </div>
+
+<!-- 계산 과정 -->
+<details class="fb" id="BD">
+<summary>📊 계산 과정 (내 수치 기준)</summary>
+<div id="BD-body" class="bd-body"></div>
+</details>
 
 <!-- 공식 -->
 <details class="fb">
@@ -457,6 +475,69 @@ function calc() {
   document.getElementById('R4d').textContent = `1+${(effCrit*100).toFixed(0)}%×(${c2total.toFixed(0)}%-1)`;
 
   document.getElementById('EF').textContent = effVal.toFixed(2)+'%';
+
+  // ===== BREAKDOWN =====
+  let bd = '';
+
+  // ① 치명타 확률
+  bd += '<div class="bd-sec"><div class="bd-title c1">🎯 ① 치명타 확률 [합산]</div>';
+  bd += mkBd('스탯 기본값', `${cs} / (${cs} + 2000) × 50`, cbv.toFixed(2)+'%');
+  let c1parts = [cbv.toFixed(2)];
+  D1.forEach((r,i) => {
+    if (document.getElementById(`c1-${i}`).checked && (r[2]||r[3]||r[4])) {
+      let vals = [];
+      if (r[2]) vals.push(`기본 ${r[2]}%`);
+      if (ero && r[3]) vals.push(`침식 ${r[3]}%`);
+      if (nit && r[4]) vals.push(`밤 ${r[4]}%`);
+      let total = r[2] + (ero?r[3]:0) + (nit?r[4]:0);
+      bd += mkBd(r[0] || '(빈 항목)', vals.join(' + '), '+'+total.toFixed(2)+'%');
+      c1parts.push((r[0]||'항목')+total.toFixed(1));
+    }
+  });
+  bd += '<div class="bd-formula">' + c1parts.join(' + ') + ' = <b>' + c1total.toFixed(2) + '%</b></div>';
+  bd += '<div class="bd-result" style="color:#c53030">→ ' + c1total.toFixed(2) + '%</div></div>';
+
+  // ② 치명타 피해
+  bd += '<div class="bd-sec"><div class="bd-title c2">💥 ② 치명타 피해 [곱연산]</div>';
+  bd += mkBd('스탯 기본값', `200 + (${cs}/9000)×120`, dbv.toFixed(2)+'%');
+  let c2names = [];
+  D2.forEach((r,i) => {
+    if (document.getElementById(`c2-${i}`).checked && r[2]) {
+      bd += mkBd(r[0] || '(빈 항목)', r[2].toFixed(2)+'%', '+'+r[2].toFixed(2)+'%');
+      c2names.push((r[0]||'항목')+r[2]);
+    }
+  });
+  bd += '<div class="bd-formula">' + dbv.toFixed(2) + ' × (1 + ' + c2sum.toFixed(0) + ' ÷ 100) = ' + dbv.toFixed(2) + ' × ' + (1+c2sum/100).toFixed(2) + ' = <b>' + c2total.toFixed(2) + '%</b></div>';
+  bd += '<div class="bd-result" style="color:#c05621">→ ' + c2total.toFixed(2) + '%</div></div>';
+
+  // ③ 추가타 확률
+  bd += '<div class="bd-sec"><div class="bd-title c3">⚡ ③ 추가타 확률 [곱확률]</div>';
+  bd += mkBd('스탯 기본값', `${es} / (${es} + 9100) × 100`, ebv.toFixed(2)+'%');
+  D3.forEach((r,i) => {
+    if (document.getElementById(`c3-${i}`).checked && (r[2]||r[3]||r[4])) {
+      let vals = [];
+      if (r[2]) vals.push(`기본 ${r[2]}%`);
+      if (ero && r[3]) vals.push(`침식 ${r[3]}%`);
+      if (nit && r[4]) vals.push(`밤 ${r[4]}%`);
+      let total = r[2] + (ero?r[3]:0) + (nit?r[4]:0);
+      bd += mkBd(r[0] || '(빈 항목)', vals.join(' + '), '+'+total.toFixed(2)+'%');
+    }
+  });
+  bd += '<div class="bd-formula">(1 + ' + ebv.toFixed(2) + '÷100) × (1 + ' + c3items.toFixed(2) + '÷100) − 1<br>= ' + (1+ebv/100).toFixed(4) + ' × ' + (1+c3items/100).toFixed(4) + ' − 1 = <b>' + c3total.toFixed(2) + '%</b></div>';
+  bd += '<div class="bd-result" style="color:#2c7a7b">→ ' + c3total.toFixed(2) + '%</div></div>';
+
+  // ④ 최종 효율
+  bd += '<div class="bd-sec"><div class="bd-title c4">🏆 ④ 최종 효율</div>';
+  bd += mkBd('치명타 확률 (기본)', (cbv+c1b).toFixed(2)+'%', '캡 적용 → '+(effCrit*100).toFixed(2)+'%');
+  bd += mkBd('치명타 피해', c2total.toFixed(2)+'%', '');
+  bd += '<div class="bd-formula">(1 + ' + (effCrit*100).toFixed(2) + '%÷100 × (' + c2total.toFixed(2) + '%÷100 − 1))<br>= (1 + ' + effCrit.toFixed(4) + ' × ' + (c2total/100-1).toFixed(4) + ') × 100 = <b>' + effVal.toFixed(2) + '%</b></div>';
+  bd += '<div class="bd-result" style="color:#6b46c1">→ ' + effVal.toFixed(2) + '%</div></div>';
+
+  document.getElementById('BD-body').innerHTML = bd;
+}
+
+function mkBd(name, detail, val) {
+  return `<div class="bd-item"><span class="bd-nm">${name}</span><span style="color:#a0aec0;font-size:.9em;flex:1;text-align:center;padding:0 6px">${detail}</span><span class="bd-vl">${val}</span></div>`;
 }
 
 // ===== INIT =====
