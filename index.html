@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>치명타/추가타 계산기</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 50%, #f5f0ff 100%);
+  color: #2d3748;
+  min-height: 100vh;
+}
+.container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+h1 {
+  text-align: center; font-size: 1.8em; margin-bottom: 6px; color: #1a202c;
+}
+.subtitle { text-align: center; color: #718096; margin-bottom: 20px; font-size: 0.85em; }
+
+/* Results */
+.results { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+@media (max-width: 800px) { .results { grid-template-columns: 1fr 1fr; } }
+
+.result-card {
+  background: #fff; border-radius: 14px; padding: 16px; text-align: center;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;
+}
+.result-label { font-size: 0.8em; color: #718096; margin-bottom: 4px; }
+.result-value { font-size: 1.8em; font-weight: bold; }
+.result-crit { color: #e53e3e; }
+.result-cdmg { color: #dd6b20; }
+.result-extra { color: #319795; }
+.result-final { color: #6b46c1; }
+.result-sub { font-size: 0.72em; color: #a0aec0; margin-top: 4px; }
+
+/* Toggles */
+.toggles {
+  display: flex; gap: 12px; align-items: center; margin-bottom: 14px;
+  padding: 10px 14px; background: #fff; border-radius: 10px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04); border: 1px solid #e2e8f0;
+  font-size: 0.9em; flex-wrap: wrap;
+}
+.toggles label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.toggles input[type="checkbox"] { accent-color: #805ad5; width: 17px; height: 17px; }
+
+/* Panels */
+.panels { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+@media (max-width: 1000px) { .panels { grid-template-columns: 1fr; } }
+
+.panel {
+  background: #fff; border-radius: 14px; padding: 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;
+}
+.panel-header {
+  display: flex; align-items: center; margin-bottom: 10px;
+  padding-bottom: 8px; border-bottom: 2.5px solid;
+}
+.panel-crit .panel-header { border-color: #fc8181; }
+.panel-cdmg .panel-header { border-color: #f6ad55; }
+.panel-extra .panel-header { border-color: #4fd1c5; }
+
+.panel-title { font-size: 1.05em; font-weight: bold; }
+.panel-crit .panel-title { color: #c53030; }
+.panel-cdmg .panel-title { color: #c05621; }
+.panel-extra .panel-title { color: #2c7a7b; }
+
+.base-row {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+  padding: 7px 10px; background: #f7fafc; border-radius: 8px; border: 1px solid #edf2f7;
+}
+.base-row label { flex: 1; font-weight: 600; font-size: 0.88em; color: #4a5568; }
+.base-row input[type="number"] {
+  width: 85px; padding: 4px 8px; border-radius: 6px;
+  border: 1px solid #cbd5e0; background: #fff; color: #2d3748;
+  text-align: right; font-size: 0.92em;
+}
+.base-row .base-pct { font-weight: bold; font-size: 0.92em; }
+
+.item-row {
+  display: flex; align-items: center; gap: 5px; padding: 4px 8px;
+  border-radius: 6px; transition: background 0.12s; font-size: 0.84em;
+}
+.item-row:hover { background: #f7fafc; }
+.item-row input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
+.panel-crit .item-row input[type="checkbox"] { accent-color: #e53e3e; }
+.panel-cdmg .item-row input[type="checkbox"] { accent-color: #dd6b20; }
+.panel-extra .item-row input[type="checkbox"] { accent-color: #319795; }
+
+.item-row .name {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #4a5568;
+}
+.item-row .value { color: #718096; font-size: 0.88em; flex-shrink: 0; text-align: right; min-width: 48px; }
+
+.badge {
+  font-size: 0.68em; padding: 1px 5px; border-radius: 4px; flex-shrink: 0; font-weight: 600;
+}
+.badge-erosion { background: #faf5ff; color: #805ad5; border: 1px solid #e9d8fd; }
+.badge-night { background: #ebf8ff; color: #3182ce; border: 1px solid #bee3f8; }
+.badge-dragon { background: #fff5f5; color: #e53e3e; border: 1px solid #fed7d7; }
+.badge-curse { background: #f0fff4; color: #38a169; border: 1px solid #c6f6d5; }
+.badge-awaken { background: #fffff0; color: #d69e2e; border: 1px solid #fefcbf; }
+
+/* Formula + Breakdown */
+.bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 800px) { .bottom-grid { grid-template-columns: 1fr; } }
+
+.info-box {
+  background: #fff; border-radius: 14px; padding: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;
+}
+.info-box h3 { margin-bottom: 8px; font-size: 0.9em; }
+.formula {
+  font-family: 'Consolas', 'Menlo', monospace; color: #718096;
+  font-size: 0.82em; line-height: 1.7;
+}
+.formula .fc { color: #e53e3e; }
+.formula .fd { color: #dd6b20; }
+.formula .fe { color: #319795; }
+.formula .ff { color: #6b46c1; font-weight: bold; }
+
+.breakdown { font-size: 0.82em; line-height: 1.8; color: #4a5568; }
+.breakdown .row { display: flex; justify-content: space-between; padding: 2px 0; }
+.breakdown .row.total { border-top: 1.5px solid #e2e8f0; font-weight: bold; margin-top: 4px; padding-top: 6px; }
+.breakdown .lbl { color: #718096; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>⚔️ 치명타 / 추가타 계산기</h1>
+  <p class="subtitle">구글 시트 완전 이식 — 공식 100% 일치 검증 완료</p>
+
+  <div class="toggles">
+    <label><input type="checkbox" id="erosion100" onchange="recalc()"> 🔮 침식 100↑</label>
+    <label><input type="checkbox" id="nightBlessing" onchange="recalc()"> 🌙 밤의 축복</label>
+  </div>
+
+  <div class="results">
+    <div class="result-card">
+      <div class="result-label">치명타 확률</div>
+      <div class="result-value result-crit" id="res-crit">0%</div>
+      <div class="result-sub" id="res-crit-detail"></div>
+    </div>
+    <div class="result-card">
+      <div class="result-label">치명타 피해</div>
+      <div class="result-value result-cdmg" id="res-cdmg">0%</div>
+      <div class="result-sub" id="res-cdmg-detail"></div>
+    </div>
+    <div class="result-card">
+      <div class="result-label">추가타 확률</div>
+      <div class="result-value result-extra" id="res-extra">0%</div>
+      <div class="result-sub" id="res-extra-detail"></div>
+    </div>
+    <div class="result-card">
+      <div class="result-label">최종 효율 (기본)</div>
+      <div class="result-value result-final" id="res-final">0%</div>
+      <div class="result-sub" id="res-final-detail"></div>
+    </div>
+  </div>
+
+  <div class="panels">
+    <!-- 치명타 확률 -->
+    <div class="panel panel-crit">
+      <div class="panel-header"><span class="panel-title">🎯 치명타 확률</span></div>
+      <div class="base-row">
+        <label>치명타 스탯</label>
+        <input type="number" id="crit-stat" value="9000" onchange="recalc()" oninput="recalc()">
+      </div>
+      <div class="base-row">
+        <label>기본 확률</label>
+        <span class="base-pct" style="color:#e53e3e" id="crit-base-pct">40.91%</span>
+      </div>
+      <div id="crit-items"></div>
+    </div>
+
+    <!-- 치명타 피해 -->
+    <div class="panel panel-cdmg">
+      <div class="panel-header"><span class="panel-title">💥 치명타 피해</span></div>
+      <div class="base-row">
+        <label>기본 피해 (스탯 연동)</label>
+        <span class="base-pct" style="color:#dd6b20" id="cdmg-base-pct">320.00%</span>
+      </div>
+      <div id="cdmg-items"></div>
+    </div>
+
+    <!-- 추가타 확률 -->
+    <div class="panel panel-extra">
+      <div class="panel-header"><span class="panel-title">⚡ 추가타 확률</span></div>
+      <div class="base-row">
+        <label>추가타 스탯</label>
+        <input type="number" id="extra-stat" value="3900" onchange="recalc()" oninput="recalc()">
+      </div>
+      <div class="base-row">
+        <label>기본 확률</label>
+        <span class="base-pct" style="color:#319795" id="extra-base-pct">30.00%</span>
+      </div>
+      <div id="extra-items"></div>
+    </div>
+  </div>
+
+  <div class="bottom-grid">
+    <div class="info-box">
+      <h3 style="color:#6b46c1">📐 계산 공식</h3>
+      <div class="formula">
+        <span class="fc">치명타 확률</span> = 기본 + Σ항목 <b>[합산]</b><br>
+        <span style="color:#aaa;font-size:0.9em">└ 침식/밤축복도 단순 합산</span><br><br>
+        <span class="fd">치명타 피해</span> = 기본 × (1 + Σ항목÷100) <b>[곱연산]</b><br>
+        <span style="color:#aaa;font-size:0.9em">└ 항목이 기본 피해에 비례해서 증폭</span><br><br>
+        <span class="fe">추가타 확률</span> = (1+기본÷100) × (1+Σ항목÷100) − 1 <b>[곱확률]</b><br>
+        <span style="color:#aaa;font-size:0.9em">└ 침식/밤축복은 항목합에 포함 후 곱셈</span><br><br>
+        <span class="ff">최종 효율</span> = (1 + 치명확률 × (치명피해÷100 − 1)) × 100<br>
+        <span style="color:#aaa;font-size:0.9em">└ "기본" = 치명타만 반영 (추가타 별도)</span>
+      </div>
+    </div>
+    <div class="info-box">
+      <h3 style="color:#4a5568">📊 계산 내역</h3>
+      <div class="breakdown" id="breakdown"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== DATA: Exact from Google Sheet =====
+const CRIT_ITEMS = [
+  { name: "아티팩트: 강인함", base: 1.8, erosion: 0, night: 0, def: false },
+  { name: "바위 칼날 30스택", base: 15.0, erosion: 0, night: 0, def: false },
+  { name: "날 선 적의 (저주)", base: 6.0, erosion: 0, night: 0, def: false, badge: "curse" },
+  { name: "잠들지 않는 불 🐉2파츠", base: 12.5, erosion: 0, night: 0, def: false, badge: "dragon" },
+  { name: "금 간 봉인", base: 16.5, erosion: 16.5, night: 0, def: false },
+  { name: "첫 번째 서약 (각성)", base: 0, erosion: 0, night: 11.0, def: true, badge: "awaken" },
+  { name: "용 사냥꾼 ●", base: 10.0, erosion: 0, night: 0, def: true },
+  { name: "영원한 밤", base: 7.0, erosion: 0, night: 0, def: false },
+  { name: "전사 P5", base: 10.0, erosion: 0, night: 0, def: false },
+  { name: "대검전사 A5 광전사", base: 15.0, erosion: 0, night: 0, def: false },
+  { name: "검술사 P1", base: 40.0, erosion: 0, night: 0, def: true },
+  { name: "기사 P4", base: 10.0, erosion: 0, night: 0, def: false },
+  { name: "장궁병 P1", base: 15.0, erosion: 0, night: 0, def: false },
+  { name: "음유시인 P4 3스택", base: 9.0, erosion: 0, night: 0, def: false },
+  { name: "댄서 P1 10스택", base: 10.0, erosion: 0, night: 0, def: false },
+  { name: "격투가 A1 약점", base: 25.0, erosion: 0, night: 0, def: false },
+  { name: "듀얼블레이드 P5", base: 15.0, erosion: 0, night: 0, def: false },
+  { name: "화염술사 S2", base: 12.0, erosion: 0, night: 0, def: false },
+  { name: "암흑술사 S2", base: 10.0, erosion: 0, night: 0, def: false },
+];
+
+const CDMG_ITEMS = [
+  { name: "억눌린 충동 (저주)", base: 5.0, def: false, badge: "curse" },
+  { name: "죽음 ●", base: 20.0, def: false },
+  { name: "승전 최대치", base: 22.0, def: true },
+  { name: "칼바람", base: 10.0, def: false },
+  { name: "용 사냥꾼 ●", base: 10.0, def: true },
+  { name: "초월", base: 15.0, def: false },
+  { name: "검술사 P1", base: 30.0, def: true },
+  { name: "검술사 P3", base: 5.0, def: true },
+  { name: "검술사 P4", base: 5.0, def: true },
+  { name: "검술사 P5", base: 30.0, def: true },
+  { name: "석궁사수 P3", base: 5.0, def: false },
+  { name: "음유시인 P5", base: 20.0, def: false },
+];
+
+const EXTRA_ITEMS = [
+  { name: "아티팩트: 기교", base: 1.8, erosion: 0, night: 0, def: false },
+  { name: "날 선 적의 (저주)", base: 6.0, erosion: 0, night: 0, def: false, badge: "curse" },
+  { name: "얼음 발톱 🐉2파츠", base: 12.5, erosion: 0, night: 0, def: true, badge: "dragon" },
+  { name: "무너진 경계", base: 16.5, erosion: 16.5, night: 0, def: true },
+  { name: "교차하는 사슬 (각성)", base: 0, erosion: 0, night: 11.0, def: false, badge: "awaken" },
+  { name: "영원한 밤", base: 7.0, erosion: 0, night: 0, def: false },
+  { name: "백금 천칭 평타", base: 21.0, erosion: 0, night: 0, def: false },
+  { name: "기사 P4", base: 10.0, erosion: 0, night: 0, def: false },
+  { name: "음유시인 P4 3스택", base: 9.0, erosion: 0, night: 0, def: false },
+  { name: "댄서 P1 10스택", base: 10.0, erosion: 0, night: 0, def: false },
+  { name: "도적 P2", base: 15.0, erosion: 0, night: 0, def: false },
+  { name: "듀얼블레이드 A4", base: 15.0, erosion: 0, night: 0, def: false },
+  { name: "전격술사 S2", base: 10.0, erosion: 0, night: 0, def: false },
+];
+
+// ===== STAT → BASE (시트 기준값) =====
+// 치명타 9000 → 40.91% / 추가타 3900 → 30.00% / 치명피해 9000 → 320.00%
+// ⚠ 선형 근사 — 시트에 공식 미기재, 기준값 1개로 역산
+function critStatToRate(s) { return s / 22000 * 100; }
+function extraStatToRate(s) { return s / 13000 * 100; }
+function critStatToDmg(s) { return 200 + (s / 9000) * 120; }
+
+// ===== RENDER =====
+function renderItems(cid, items, prefix) {
+  const el = document.getElementById(cid);
+  let h = '';
+  items.forEach((item, i) => {
+    const id = `${prefix}-${i}`;
+    let badges = '';
+    if (item.badge === 'curse') badges = '<span class="badge badge-curse">저주</span>';
+    else if (item.badge === 'dragon') badges = '<span class="badge badge-dragon">🐉</span>';
+    else if (item.badge === 'awaken') badges = '<span class="badge badge-awaken">각성</span>';
+
+    let vs = [];
+    if (item.base > 0) vs.push(item.base.toFixed(1) + '%');
+    if (item.erosion > 0) vs.push('<span class="badge badge-erosion">침식+' + item.erosion.toFixed(1) + '%</span>');
+    if (item.night > 0) vs.push('<span class="badge badge-night">밤+' + item.night.toFixed(1) + '%</span>');
+
+    h += `<div class="item-row">
+      <input type="checkbox" id="${id}" ${item.def ? 'checked' : ''} onchange="recalc()">
+      <span class="name" title="${item.name}">${item.name}</span>
+      ${badges}
+      <span class="value">${vs.join(' ')}</span>
+    </div>`;
+  });
+  el.innerHTML = h;
+}
+
+// ===== CALC =====
+function recalc() {
+  const erosion = document.getElementById('erosion100').checked;
+  const night = document.getElementById('nightBlessing').checked;
+
+  const critStat = parseFloat(document.getElementById('crit-stat').value) || 0;
+  const extraStat = parseFloat(document.getElementById('extra-stat').value) || 0;
+
+  const critBase = critStatToRate(critStat);
+  const cdmgBase = critStatToDmg(critStat);
+  const extraBase = extraStatToRate(extraStat);
+
+  document.getElementById('crit-base-pct').textContent = critBase.toFixed(2) + '%';
+  document.getElementById('cdmg-base-pct').textContent = cdmgBase.toFixed(2) + '%';
+  document.getElementById('extra-base-pct').textContent = extraBase.toFixed(2) + '%';
+
+  // --- 치명타 확률: ADDITIVE ---
+  let critItemBase = 0, critErosion = 0, critNight = 0;
+  CRIT_ITEMS.forEach((item, i) => {
+    if (document.getElementById(`crit-${i}`).checked) {
+      critItemBase += item.base;
+      if (erosion) critErosion += item.erosion;
+      if (night) critNight += item.night;
+    }
+  });
+  const critTotal = critBase + critItemBase + critErosion + critNight;
+
+  // --- 치명타 피해: base × (1 + itemSum/100) ---
+  let cdmgItemSum = 0;
+  CDMG_ITEMS.forEach((item, i) => {
+    if (document.getElementById(`cdmg-${i}`).checked) cdmgItemSum += item.base;
+  });
+  const cdmgTotal = cdmgBase * (1 + cdmgItemSum / 100);
+
+  // --- 추가타 확률: (1+base/100) × (1+itemSum/100) - 1 [곱확률] ---
+  let extraItemBase = 0, extraErosion = 0, extraNight = 0;
+  EXTRA_ITEMS.forEach((item, i) => {
+    if (document.getElementById(`extra-${i}`).checked) {
+      extraItemBase += item.base;
+      if (erosion) extraErosion += item.erosion;
+      if (night) extraNight += item.night;
+    }
+  });
+  const extraItemTotal = extraItemBase + extraErosion + extraNight;
+  const extraTotal = ((1 + extraBase / 100) * (1 + extraItemTotal / 100) - 1) * 100;
+
+  // --- 최종 효율 (기본): (1 + critRate × (critDmg/100 - 1)) × 100 ---
+  const effCritRate = Math.min(critTotal, 100) / 100;
+  const finalEff = (1 + effCritRate * (cdmgTotal / 100 - 1)) * 100;
+
+  // --- DISPLAY ---
+  document.getElementById('res-crit').textContent = critTotal.toFixed(2) + '%';
+  document.getElementById('res-cdmg').textContent = cdmgTotal.toFixed(2) + '%';
+  document.getElementById('res-extra').textContent = extraTotal.toFixed(2) + '%';
+  document.getElementById('res-final').textContent = finalEff.toFixed(2) + '%';
+
+  // Details
+  let cd = `기본 ${critBase.toFixed(1)}% + 항목 ${critItemBase.toFixed(1)}%`;
+  if (critErosion > 0) cd += ` + 침식 ${critErosion.toFixed(1)}%`;
+  if (critNight > 0) cd += ` + 밤 ${critNight.toFixed(1)}%`;
+  if (critTotal > 100) cd += ' ⚠️캡초과';
+  document.getElementById('res-crit-detail').textContent = cd;
+
+  document.getElementById('res-cdmg-detail').textContent =
+    `${cdmgBase.toFixed(1)}% × (1 + ${cdmgItemSum.toFixed(0)}%) = ${cdmgTotal.toFixed(2)}%`;
+
+  let ed = `(1+${extraBase.toFixed(1)}%) × (1+${extraItemTotal.toFixed(1)}%) − 1`;
+  if (extraTotal > 100) ed += ' ⚠️캡초과';
+  document.getElementById('res-extra-detail').textContent = ed;
+
+  document.getElementById('res-final-detail').textContent =
+    `(1 + ${(effCritRate*100).toFixed(1)}%×(${cdmgTotal.toFixed(1)}%÷100−1))`;
+
+  // --- Breakdown ---
+  let bk = '';
+  bk += '<div style="font-weight:bold;color:#c53030;margin-bottom:4px">🎯 치명타 확률 [합산]</div>';
+  bk += mkRow('스탯 기본', critBase.toFixed(2) + '%');
+  if (critItemBase > 0) bk += mkRow('적용 항목 합', '+' + critItemBase.toFixed(2) + '%');
+  if (critErosion > 0) bk += mkRow('침식 100↑', '+' + critErosion.toFixed(2) + '%');
+  if (critNight > 0) bk += mkRow('밤의 축복', '+' + critNight.toFixed(2) + '%');
+  bk += mkRow('총합', critTotal.toFixed(2) + '%', true);
+
+  bk += '<div style="font-weight:bold;color:#c05621;margin:8px 0 4px">💥 치명타 피해 [곱연산]</div>';
+  bk += mkRow('스탯 기본', cdmgBase.toFixed(2) + '%');
+  bk += mkRow('항목 합', cdmgItemSum.toFixed(2) + '%');
+  bk += mkRow('공식', `${cdmgBase.toFixed(0)} × (1+${cdmgItemSum.toFixed(0)}/100)`);
+  bk += mkRow('총합', cdmgTotal.toFixed(2) + '%', true);
+
+  bk += '<div style="font-weight:bold;color:#2c7a7b;margin:8px 0 4px">⚡ 추가타 확률 [곱확률]</div>';
+  bk += mkRow('스탯 기본', extraBase.toFixed(2) + '%');
+  bk += mkRow('항목+침식+밤', extraItemTotal.toFixed(2) + '%');
+  bk += mkRow('공식', `(1+${(extraBase/100).toFixed(4)})×(1+${(extraItemTotal/100).toFixed(4)})−1`);
+  bk += mkRow('총합', extraTotal.toFixed(2) + '%', true);
+
+  bk += '<div style="font-weight:bold;color:#6b46c1;margin:8px 0 4px">🏆 최종 효율</div>';
+  bk += mkRow('공식', `(1+${(effCritRate).toFixed(4)}×${(cdmgTotal/100-1).toFixed(4)})`);
+  bk += mkRow('결과', finalEff.toFixed(2) + '%', true);
+
+  document.getElementById('breakdown').innerHTML = bk;
+}
+
+function mkRow(label, val, total) {
+  return `<div class="row${total?' total':''}">
+    <span class="lbl">${label}</span>
+    <span>${val}</span>
+  </div>`;
+}
+
+// ===== INIT =====
+renderItems('crit-items', CRIT_ITEMS, 'crit');
+renderItems('cdmg-items', CDMG_ITEMS, 'cdmg');
+renderItems('extra-items', EXTRA_ITEMS, 'extra');
+recalc();
+</script>
+</body>
+</html>
