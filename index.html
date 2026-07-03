@@ -279,9 +279,12 @@ const D3 = [ // 추가타 확률 (R02~R22, col 10~14)
 ];
 
 // ===== STAT FORMULAS (추측 — 선형 근사) =====
-function cRate(s){return s/22000*100}
+// 치명타 확률: stat/(stat+2000)×50 — 8000→40%, 9000→40.91% 확정
+function cRate(s){return s/(s+2000)*50}
+// 치명타 피해: 추측 (데이터 1개, 9000→320%)
 function cDmg(s){return 200+(s/9000)*120}
-function eRate(s){return s/13000*100}
+// 추가타 확률: 추측 (데이터 1개, 3900→30%)
+function eRate(s){return s/(s+9100)*100}
 
 // ===== RENDER =====
 function renderCol(el, data, cls, cols) {
