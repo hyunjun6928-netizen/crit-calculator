@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>방어력 / 피해감소 계산기</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,'Apple SD Gothic Neo','Segoe UI',sans-serif;background:linear-gradient(135deg,#f0f4ff 0%,#e8f5e9 50%,#f0f4ff 100%);color:#2d3748;min-height:100vh;padding-bottom:env(safe-area-inset-bottom,20px)}
+.ct{max-width:800px;margin:0 auto;padding:16px}
+h1{text-align:center;font-size:1.5em;margin-bottom:4px;color:#1a202c}
+.sub{text-align:center;color:#718096;margin-bottom:16px;font-size:.78em}
+
+/* result cards */
+.rw{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,#f0f4ff,#e8f5e9);padding:8px 0 10px;margin:0 -16px;padding-left:16px;padding-right:16px}
+.rs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rc{background:#fff;border-radius:12px;padding:10px 6px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.06);border:1px solid #e2e8f0}
+.rl{font-size:.68em;color:#718096;margin-bottom:2px}
+.rv{font-size:1.2em;font-weight:bold}
+.rv1{color:#2f855a}.rv2{color:#c53030}.rv3{color:#2b6cb0}
+.rd{font-size:.6em;color:#a0aec0;margin-top:2px}
+
+/* tabs */
+.tabs{display:flex;gap:0;margin-bottom:14px;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0}
+.tab{flex:1;padding:10px 8px;text-align:center;font-size:.85em;font-weight:600;cursor:pointer;background:#f7fafc;border:none;color:#718096;transition:all .15s}
+.tab.active{background:#fff;color:#2d3748;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.tab:not(:last-child){border-right:1px solid #e2e8f0}
+
+/* panels */
+.panel{display:none;background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1px solid #e2e8f0;margin-bottom:14px}
+.panel.active{display:block}
+.panel h2{font-size:.95em;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid}
+.panel h2.c1{color:#2f855a;border-color:#68d391}
+.panel h2.c2{color:#c53030;border-color:#fc8181}
+.panel h2.c3{color:#2b6cb0;border-color:#63b3ed}
+
+/* input rows */
+.ir{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:.85em}
+.ir label{flex:1;font-weight:600;color:#4a5568;min-width:100px}
+.ir input[type=number]{width:110px;padding:6px 10px;border-radius:8px;border:1px solid #cbd5e0;background:#fff;color:#2d3748;text-align:right;font-size:16px;-webkit-appearance:none}
+.ir .unit{color:#a0aec0;font-size:.85em;min-width:30px}
+
+/* presets */
+.presets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.preset{padding:5px 12px;border-radius:8px;border:1px solid #e2e8f0;background:#f7fafc;font-size:.78em;cursor:pointer;transition:all .15s;color:#4a5568}
+.preset:hover{background:#edf2f7}
+.preset.active{background:#2f855a;color:#fff;border-color:#2f855a}
+
+/* formula display */
+.fd{background:#f7fafc;border-radius:10px;padding:10px 12px;margin-top:10px;font-size:.82em;line-height:1.8;border:1px solid #edf2f7}
+.fd .formula{font-family:Consolas,Menlo,monospace;background:#fff;padding:6px 10px;border-radius:6px;border:1px solid #e2e8f0;margin:4px 0;word-break:break-all}
+.fd .step{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px dotted #e2e8f0}
+.fd .step:last-child{border-bottom:none}
+.fd .step .nm{color:#718096}
+.fd .step .vl{font-weight:600;font-family:Consolas,Menlo,monospace}
+.fd .result{font-weight:bold;font-size:1.05em;margin-top:6px}
+
+/* graph */
+.graph-wrap{background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1px solid #e2e8f0;margin-bottom:14px}
+.graph-wrap h3{font-size:.9em;color:#4a5568;margin-bottom:10px}
+canvas{width:100%;height:250px;border-radius:8px}
+
+/* comparison table */
+.cmp{width:100%;border-collapse:collapse;font-size:.78em;margin-top:10px}
+.cmp th{background:#f7fafc;padding:6px 8px;text-align:left;border-bottom:2px solid #e2e8f0;color:#718096;font-weight:600}
+.cmp td{padding:5px 8px;border-bottom:1px solid #edf2f7}
+.cmp td:not(:first-child){text-align:right;font-family:Consolas,Menlo,monospace}
+.cmp tr.hl{background:#f0fff4}
+
+/* reset */
+.tg{display:flex;gap:10px;align-items:center;margin-bottom:12px;padding:10px 12px;background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.04);border:1px solid #e2e8f0;font-size:.88em;flex-wrap:wrap;justify-content:flex-end}
+.rst-btn{background:#e2e8f0;color:#4a5568;border:none;border-radius:8px;padding:6px 14px;font-size:.82em;font-weight:600;cursor:pointer;transition:background .15s}
+.rst-btn:hover{background:#cbd5e0}
+.rst-btn:active{background:#a0aec0;color:#fff}
+
+/* source */
+.src{text-align:center;font-size:.7em;color:#a0aec0;margin-top:14px;line-height:1.6}
+.src a{color:#718096}
+
+@media(max-width:600px){
+  .rs{grid-template-columns:1fr 1fr 1fr}
+  .rv{font-size:1em}
+  .ir{flex-wrap:wrap}
+  .ir label{min-width:auto;flex:1 1 100%}
+}
+</style>
+</head>
+<body>
+<div class="ct">
+<h1>🛡️ 방어력 / 피해감소 계산기</h1>
+<p class="sub">마비노기 모바일 — 방어력·피해감소·보스방어 수확체감 계산</p>
+
+<div class="rw">
+<div class="rs">
+  <div class="rc"><div class="rl">데미지 감소율</div><div class="rv rv1" id="R1">-</div><div class="rd" id="R1d"></div></div>
+  <div class="rc"><div class="rl">실제 받는 피해</div><div class="rv rv2" id="R2">-</div><div class="rd" id="R2d"></div></div>
+  <div class="rc"><div class="rl">최종 (피감 적용)</div><div class="rv rv3" id="R3">-</div><div class="rd" id="R3d"></div></div>
+</div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab(0)">🛡️ 받는 피해</button>
+  <button class="tab" onclick="switchTab(1)">⚔️ 주는 피해</button>
+  <button class="tab" onclick="switchTab(2)">📊 비교표</button>
+</div>
+
+<!-- ===== 탭 0: 받는 피해 ===== -->
+<div class="panel active" id="P0">
+  <h2 class="c1">🛡️ 받는 피해 계산 (내 방어력 기준)</h2>
+  <div class="ir"><label>내 방어력</label><input type="number" id="myDef" value="5000" inputmode="numeric" oninput="calc()"><span class="unit">스탯</span></div>
+  <div class="ir"><label>받는 피해 % 감소</label><input type="number" id="pctReduce" value="0" inputmode="numeric" oninput="calc()" step="0.1"><span class="unit">%</span></div>
+  <div class="ir"><label>몬스터 원래 데미지</label><input type="number" id="monDmg" value="10000" inputmode="numeric" oninput="calc()"><span class="unit">dmg</span></div>
+  <div class="ir"><label>피해 감소 (고정)</label><input type="number" id="fixReduce" value="0" inputmode="numeric" oninput="calc()"><span class="unit">고정</span></div>
+  <div class="fd" id="BD0"></div>
+</div>
+
+<!-- ===== 탭 1: 주는 피해 ===== -->
+<div class="panel" id="P1">
+  <h2 class="c2">⚔️ 주는 피해 계산 (보스 방어력 기준)</h2>
+  <p style="font-size:.78em;color:#718096;margin-bottom:8px">보스 프리셋</p>
+  <div class="presets">
+    <button class="preset" onclick="setBoss(0,'허수아비')">허수아비 (0)</button>
+    <button class="preset" onclick="setBoss(6410,'글라리')">글라리 (6410)</button>
+    <button class="preset" onclick="setBoss(9153,'어비스 지옥2')">어비스 지옥2 (9153)</button>
+    <button class="preset" onclick="setBoss(12000,'')">12000</button>
+    <button class="preset" onclick="setBoss(15000,'')">15000</button>
+  </div>
+  <div class="ir"><label>보스 방어력</label><input type="number" id="bossDef" value="6410" inputmode="numeric" oninput="calc()"><span class="unit">스탯</span></div>
+  <div class="ir"><label>방어력 감소 (%)</label><input type="number" id="bossDefReduce" value="0" inputmode="numeric" oninput="calc()" step="10" min="0" max="100"><span class="unit">%</span></div>
+  <div class="ir"><label>내 원래 데미지</label><input type="number" id="myDmg" value="10000" inputmode="numeric" oninput="calc()"><span class="unit">dmg</span></div>
+  <div class="fd" id="BD1"></div>
+</div>
+
+<!-- ===== 탭 2: 비교표 ===== -->
+<div class="panel" id="P2">
+  <h2 class="c3">📊 방어력별 감소율 비교표</h2>
+  <div style="display:flex;gap:8px;margin-bottom:10px;font-size:.82em;align-items:center">
+    <label style="font-weight:600;color:#4a5568">기준:</label>
+    <select id="cmpType" onchange="calc()" style="padding:5px 10px;border-radius:8px;border:1px solid #cbd5e0;font-size:16px">
+      <option value="player">내 방어력 (상수 10000)</option>
+      <option value="boss">보스 방어력 (상수 5828)</option>
+    </select>
+  </div>
+  <div id="cmpTable"></div>
+</div>
+
+<!-- 그래프 -->
+<div class="graph-wrap">
+  <h3>📈 방어력 vs 감소율 곡선</h3>
+  <canvas id="graph"></canvas>
+</div>
+
+<div class="tg">
+  <button class="rst-btn" onclick="resetAll()">🔄 초기화</button>
+</div>
+
+<!-- 공식 -->
+<details style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1px solid #e2e8f0;margin-bottom:14px">
+<summary style="cursor:pointer;font-weight:bold;color:#2f855a;font-size:.9em;user-select:none">📐 사용된 공식</summary>
+<div style="font-size:.78em;line-height:1.8;margin-top:10px;color:#718096">
+<p><b style="color:#2f855a">① 받는 피해 (내 방어력)</b></p>
+<p><code style="color:#2f855a">최종 피해 = 몬스터 데미지 ÷ (1 + 방어력 ÷ 10000) × (1 - 받는피해%감소÷100) − 피해감소(고정)</code></p>
+<p>감소율 = 방어력 ÷ (방어력 + 10000)</p>
+<p style="color:#a0aec0">출처: 나무위키 마비노기 모바일/능력치</p>
+<br>
+<p><b style="color:#c53030">② 주는 피해 (보스 방어력)</b></p>
+<p><code style="color:#c53030">실제 데미지 = 내 데미지 ÷ (1 + 보스방어력 ÷ 5828)</code></p>
+<p>감소율 = 보스방어력 ÷ (보스방어력 + 5828)</p>
+<p style="color:#a0aec0">출처: 디시인사이드 마비모갤 실험 (상수 A=5828)</p>
+<br>
+<p><b style="color:#718096">⚠️ 마도저항</b></p>
+<p>마도저항 공식은 현재 알려진 바 없음. 방어력과 유사한 구조로 추정되나 미확인.</p>
+</div>
+</details>
+
+<div class="src">
+  출처: <a href="https://namu.wiki/w/마비노기%20모바일/능력치" target="_blank">나무위키</a> · 
+  <a href="https://gall.dcinside.com/mgallery/board/view/?id=mabinogimobile&no=1320747" target="_blank">디시 방어력 실험</a>
+</div>
+</div>
+
+<script>
+let currentTab = 0;
+
+function switchTab(n) {
+  currentTab = n;
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===n));
+  document.querySelectorAll('.panel').forEach((p,i) => p.classList.toggle('active', i===n));
+  calc();
+}
+
+function setBoss(val, name) {
+  document.getElementById('bossDef').value = val;
+  document.getElementById('bossDefReduce').value = 0;
+  document.querySelectorAll('.preset').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  calc();
+}
+
+function resetAll() {
+  document.getElementById('myDef').value = '0';
+  document.getElementById('pctReduce').value = '0';
+  document.getElementById('monDmg').value = '10000';
+  document.getElementById('fixReduce').value = '0';
+  document.getElementById('bossDef').value = '0';
+  document.getElementById('bossDefReduce').value = '0';
+  document.getElementById('myDmg').value = '10000';
+  document.querySelectorAll('.preset').forEach(p => p.classList.remove('active'));
+  calc();
+}
+
+function calc() {
+  // === 받는 피해 ===
+  const myDef = parseFloat(document.getElementById('myDef').value)||0;
+  const pctR = parseFloat(document.getElementById('pctReduce').value)||0;
+  const monDmg = parseFloat(document.getElementById('monDmg').value)||0;
+  const fixR = parseFloat(document.getElementById('fixReduce').value)||0;
+
+  const defRate = myDef / (myDef + 10000); // 감소율 (0~1)
+  const afterDef = monDmg / (1 + myDef/10000);
+  const afterPct = afterDef * (1 - pctR/100);
+  const finalDmg = Math.max(0, afterPct - fixR);
+
+  // === 주는 피해 ===
+  const bossDef = parseFloat(document.getElementById('bossDef').value)||0;
+  const bossDefR = parseFloat(document.getElementById('bossDefReduce').value)||0;
+  const myDmg = parseFloat(document.getElementById('myDmg').value)||0;
+
+  const effectiveBossDef = bossDef * (1 - bossDefR/100);
+  const bossRate = effectiveBossDef / (effectiveBossDef + 5828);
+  const bossActual = myDmg / (1 + effectiveBossDef/5828);
+
+  // === 결과 카드 ===
+  if (currentTab === 0) {
+    const totalRate = (1 - finalDmg / (monDmg||1)) * 100;
+    document.getElementById('R1').textContent = (defRate*100).toFixed(2)+'%';
+    document.getElementById('R1d').textContent = `방어력만`;
+    document.getElementById('R2').textContent = afterDef.toFixed(0);
+    document.getElementById('R2d').textContent = `${monDmg} → ${afterDef.toFixed(0)}`;
+    document.getElementById('R3').textContent = finalDmg.toFixed(0);
+    document.getElementById('R3d').textContent = `총 ${totalRate.toFixed(1)}% 감소`;
+
+    document.querySelector('.rc:nth-child(1) .rl').textContent = '데미지 감소율';
+    document.querySelector('.rc:nth-child(2) .rl').textContent = '방어 적용 후';
+    document.querySelector('.rc:nth-child(3) .rl').textContent = '최종 (피감 적용)';
+  } else if (currentTab === 1) {
+    document.getElementById('R1').textContent = (bossRate*100).toFixed(2)+'%';
+    document.getElementById('R1d').textContent = `보스 방어 감소율`;
+    document.getElementById('R2').textContent = bossActual.toFixed(0);
+    document.getElementById('R2d').textContent = `${myDmg} → ${bossActual.toFixed(0)}`;
+    document.getElementById('R3').textContent = (100-bossRate*100).toFixed(2)+'%';
+    document.getElementById('R3d').textContent = `실뎀 비율`;
+
+    document.querySelector('.rc:nth-child(1) .rl').textContent = '보스 감소율';
+    document.querySelector('.rc:nth-child(2) .rl').textContent = '실제 들어가는 뎀';
+    document.querySelector('.rc:nth-child(3) .rl').textContent = '실뎀 비율';
+  }
+
+  // === Breakdown ===
+  let bd0 = '';
+  bd0 += '<div class="step"><span class="nm">방어력</span><span class="vl">'+myDef+'</span></div>';
+  bd0 += '<div class="step"><span class="nm">감소율</span><span class="vl">'+myDef+' ÷ ('+myDef+' + 10000) = '+(defRate*100).toFixed(2)+'%</span></div>';
+  bd0 += '<div class="step"><span class="nm">방어 적용</span><span class="vl">'+monDmg+' ÷ '+(1+myDef/10000).toFixed(4)+' = '+afterDef.toFixed(2)+'</span></div>';
+  if (pctR > 0) bd0 += '<div class="step"><span class="nm">받는피해 %감소</span><span class="vl">'+afterDef.toFixed(2)+' × (1−'+pctR+'%) = '+afterPct.toFixed(2)+'</span></div>';
+  if (fixR > 0) bd0 += '<div class="step"><span class="nm">피해감소 (고정)</span><span class="vl">'+afterPct.toFixed(2)+' − '+fixR+' = '+finalDmg.toFixed(2)+'</span></div>';
+  bd0 += '<div class="result" style="color:#2f855a">→ 최종 받는 피해: '+finalDmg.toFixed(0)+' (원래 '+monDmg+'의 '+(finalDmg/(monDmg||1)*100).toFixed(1)+'%)</div>';
+  document.getElementById('BD0').innerHTML = bd0;
+
+  let bd1 = '';
+  bd1 += '<div class="step"><span class="nm">보스 방어력</span><span class="vl">'+bossDef+(bossDefR>0?' × '+(1-bossDefR/100).toFixed(2)+' = '+effectiveBossDef.toFixed(0):'')+'</span></div>';
+  bd1 += '<div class="step"><span class="nm">감소율</span><span class="vl">'+effectiveBossDef.toFixed(0)+' ÷ ('+effectiveBossDef.toFixed(0)+' + 5828) = '+(bossRate*100).toFixed(2)+'%</span></div>';
+  bd1 += '<div class="step"><span class="nm">실뎀 계산</span><span class="vl">'+myDmg+' ÷ '+(1+effectiveBossDef/5828).toFixed(4)+' = '+bossActual.toFixed(2)+'</span></div>';
+  if (bossDefR > 0) {
+    const noReduce = myDmg / (1 + bossDef/5828);
+    bd1 += '<div class="step"><span class="nm">방깎 없을 때</span><span class="vl">'+noReduce.toFixed(0)+' → 방깎 후 '+bossActual.toFixed(0)+' (+'+(bossActual-noReduce).toFixed(0)+' 이득)</span></div>';
+  }
+  bd1 += '<div class="result" style="color:#c53030">→ 실제 들어가는 데미지: '+bossActual.toFixed(0)+' ('+((1-bossRate)*100).toFixed(2)+'%)</div>';
+  document.getElementById('BD1').innerHTML = bd1;
+
+  // === 비교표 ===
+  const cmpType = document.getElementById('cmpType').value;
+  const C = cmpType === 'player' ? 10000 : 5828;
+  const label = cmpType === 'player' ? '방어력' : '보스 방어력';
+  const steps = [0,500,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,12000,15000,20000,25000,30000];
+
+  let t = '<table class="cmp"><thead><tr><th>'+label+'</th><th>감소율</th><th>실뎀 비율</th><th>10000뎀 기준</th></tr></thead><tbody>';
+  const highlight = cmpType === 'player' ? myDef : effectiveBossDef;
+  steps.forEach(s => {
+    const rate = s/(s+C)*100;
+    const actual = 10000/(1+s/C);
+    const hl = Math.abs(s-highlight) < 250 ? ' class="hl"' : '';
+    t += '<tr'+hl+'><td>'+s.toLocaleString()+'</td><td>'+rate.toFixed(2)+'%</td><td>'+(100-rate).toFixed(2)+'%</td><td>'+actual.toFixed(0)+'</td></tr>';
+  });
+  t += '</tbody></table>';
+  document.getElementById('cmpTable').innerHTML = t;
+
+  // === 그래프 ===
+  drawGraph(C, highlight);
+}
+
+function drawGraph(C, highlight) {
+  const canvas = document.getElementById('graph');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 250 * dpr;
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = 250;
+  const pad = {l:50, r:20, t:20, b:35};
+  const gW = W-pad.l-pad.r, gH = H-pad.t-pad.b;
+
+  ctx.clearRect(0,0,W,H);
+
+  // grid
+  ctx.strokeStyle = '#edf2f7';
+  ctx.lineWidth = 1;
+  for (let i=0;i<=5;i++){
+    const y = pad.t + gH*(1-i/5);
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+    ctx.fillStyle='#a0aec0';ctx.font='11px sans-serif';ctx.textAlign='right';
+    ctx.fillText((i*20)+'%',pad.l-6,y+4);
+  }
+  const xLabels = [0,5000,10000,15000,20000,25000,30000];
+  xLabels.forEach(v => {
+    const x = pad.l + (v/30000)*gW;
+    ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,pad.t+gH);ctx.stroke();
+    ctx.fillStyle='#a0aec0';ctx.font='10px sans-serif';ctx.textAlign='center';
+    ctx.fillText(v>=1000?(v/1000)+'k':v,x,H-pad.b+15);
+  });
+
+  // curve
+  ctx.beginPath();
+  ctx.strokeStyle = C===10000 ? '#38a169' : '#e53e3e';
+  ctx.lineWidth = 2.5;
+  for (let i=0;i<=300;i++){
+    const def = i*100;
+    const rate = def/(def+C);
+    const x = pad.l + (def/30000)*gW;
+    const y = pad.t + gH*(1-rate);
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+
+  // highlight point
+  if (highlight > 0) {
+    const rate = highlight/(highlight+C);
+    const x = pad.l + (highlight/30000)*gW;
+    const y = pad.t + gH*(1-rate);
+    ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fillStyle=C===10000?'#38a169':'#e53e3e';ctx.fill();
+    ctx.fillStyle='#2d3748';ctx.font='bold 11px sans-serif';ctx.textAlign='center';
+    ctx.fillText((rate*100).toFixed(1)+'%',x,y-10);
+    // dotted lines
+    ctx.setLineDash([3,3]);ctx.strokeStyle='#a0aec0';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,pad.t+gH);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(x,y);ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // axis labels
+  ctx.fillStyle='#718096';ctx.font='11px sans-serif';ctx.textAlign='center';
+  ctx.fillText(C===10000?'내 방어력':'보스 방어력',W/2,H-2);
+  ctx.save();ctx.translate(12,H/2);ctx.rotate(-Math.PI/2);ctx.fillText('감소율 (%)',0,0);ctx.restore();
+}
+
+// init
+calc();
+window.addEventListener('resize', calc);
+</script>
+</body>
+</html>
