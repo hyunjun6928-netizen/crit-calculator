@@ -90,6 +90,11 @@ h1{text-align:center;font-size:1.5em;margin-bottom:4px;color:#1a202c}
 .warn{background:#fff8f0;padding:10px;border-radius:8px;border:1px solid #fed7aa;margin-top:10px}
 .warn b{color:#c05621;font-size:.85em}
 .warn p{color:#9c6e3a;font-size:.78em;margin-top:4px;line-height:1.6}
+
+/* reset button */
+.rst-btn{background:#e2e8f0;color:#4a5568;border:none;border-radius:8px;padding:6px 14px;font-size:.82em;font-weight:600;cursor:pointer;transition:background .15s}
+.rst-btn:hover{background:#cbd5e0}
+.rst-btn:active{background:#a0aec0;color:#fff}
 </style>
 </head>
 <body>
@@ -109,6 +114,7 @@ h1{text-align:center;font-size:1.5em;margin-bottom:4px;color:#1a202c}
 <div class="tg">
   <label><input type="checkbox" id="ero" onchange="calc()"> 🔮 침식 100↑</label>
   <label><input type="checkbox" id="nit" onchange="calc()"> 🌙 밤의 축복</label>
+  <button class="rst-btn" onclick="resetAll()">🔄 초기화</button>
 </div>
 
 <div class="tbl-wrap">
@@ -323,6 +329,19 @@ function renderCol(el, data, cls, cols) {
 function tgl(id) {
   const cb = document.getElementById(id);
   cb.checked = !cb.checked;
+  calc();
+}
+
+// ===== RESET =====
+function resetAll() {
+  document.getElementById('ero').checked = false;
+  document.getElementById('nit').checked = false;
+  document.getElementById('cs').value = '9000';
+  document.getElementById('es').value = '3900';
+  // Restore defaults from data arrays
+  D1.forEach((r,i) => { document.getElementById(`c1-${i}`).checked = r[1]; });
+  D2.forEach((r,i) => { document.getElementById(`c2-${i}`).checked = r[1]; });
+  D3.forEach((r,i) => { document.getElementById(`c3-${i}`).checked = r[1]; });
   calc();
 }
 
